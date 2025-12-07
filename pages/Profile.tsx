@@ -63,20 +63,7 @@ const Profile: React.FC = () => {
       setSaving(false);
    };
 
-   const handleFinishSplit = async () => {
-      if (!user || !activeSplit) return;
-      if (confirm("Are you sure you want to finish/leave this split?")) {
-         const res = await api.splits.leave(activeSplit.id, user.id);
-         if (res.success) {
-            // Update local user state to remove active_split_id
-            const updatedUser = { ...user, active_split_id: null };
-            updateUser(updatedUser); // This updates context
-            setActiveSplit(null);
-         } else {
-            alert(res.message);
-         }
-      }
-   };
+
 
    const getLoyaltyBadge = (points: number) => {
       if (points >= 300) return { name: 'Gold Member', color: 'text-yellow-500', bg: 'bg-yellow-100', icon: <Award size={20} className="fill-current" /> };
@@ -259,12 +246,6 @@ const Profile: React.FC = () => {
                               <div className="text-sm text-gray-500 dark:text-gray-400">at {activeSplit.vendor_name}</div>
                               <div className="text-xs text-primary-600 mt-1 font-medium">{activeSplit.time_note}</div>
                            </div>
-                           <button
-                              onClick={handleFinishSplit}
-                              className="px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
-                           >
-                              <CheckCircle size={14} /> Finish
-                           </button>
                         </div>
                      ) : (
                         <p className="text-gray-400 italic text-sm">No active split joined. Join one to save money!</p>
@@ -278,7 +259,7 @@ const Profile: React.FC = () => {
                      <Utensils size={18} className="text-gray-400" /> Recent Splits
                   </h3>
                   <div className="space-y-3">
-                     {activity.recentSplits.length > 0 ? activity.recentSplits.map(s => (
+                     {activity.recentSplits.length > 0 ? activity.recentSplits.slice(0, 1).map(s => (
                         <div key={s.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                            <div>
                               <div className="font-bold text-sm dark:text-white">{s.dish_name}</div>

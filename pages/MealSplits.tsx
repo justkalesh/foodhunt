@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
 import { MealSplit, Vendor } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Users, Clock, PlusCircle, X, Search, MapPin } from 'lucide-react';
+import { Users, Clock, PlusCircle, X, Search, MapPin, CheckSquare } from 'lucide-react';
 
 interface CreateSplitModalProps {
   isOpen: boolean;
@@ -215,7 +215,7 @@ const MealSplits: React.FC = () => {
 
   const fetchData = async () => {
     const [splitsRes, vendorsRes] = await Promise.all([
-      api.splits.getAll(),
+      api.splits.getAll(user?.id),
       api.vendors.getAll()
     ]);
 
@@ -343,7 +343,12 @@ const MealSplits: React.FC = () => {
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
         {splits.map(split => {
           const isFull = split.people_joined_ids.length >= split.people_needed;
+          const isClosed = split.is_closed;
           const joined = user && split.people_joined_ids.includes(user.id);
+
+          // Requirement: Hide full splits from non-members
+          if (isFull && !joined) return null;
+
           const progress = (split.people_joined_ids.length / split.people_needed) * 100;
           const vendor = vendors.find(v => v.id === split.vendor_id);
 
@@ -354,8 +359,12 @@ const MealSplits: React.FC = () => {
 
               <div className="flex justify-between items-start mb-6 relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-orange-200 dark:from-primary-900 dark:to-orange-900 rounded-2xl flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-xl shadow-inner">
-                    {split.creator_name[0]}
+                  <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-orange-200 dark:from-primary-900 dark:to-orange-900 rounded-2xl flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-xl shadow-inner overflow-hidden">
+                    {vendor?.logo_url ? (
+                      <img src={vendor.logo_url} alt={vendor.name} className="w-full h-full object-cover" />
+                    ) : (
+                      split.creator_name[0]
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-xl text-gray-900 dark:text-white leading-tight group-hover:text-primary-600 transition-colors">{split.dish_name}</h3>
@@ -405,41 +414,97 @@ const MealSplits: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {user?.role === 'admin' && (
+                  {/* Creator OR Admin Logic */}
+                  {user && (split.creator_id === user.id || user.role === 'admin') && (
+                    <div className="flex gap-2">
+                      {/* Mark Complete Button - CREATOR ONLY */}
+                      {!isClosed && split.creator_id === user.id && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm('Mark this split as complete? This will close it.')) {
+                              // @ts-ignore - markAsComplete added to mockDatabase
+                              const res = await api.splits.markAsComplete(split.id);
+                              if (res.success) {
+                                setMsg(res.message);
+                                fetchData();
+                              } else {
+                                alert(res.message);
+                              }
+                            }
+                          }}
+                          className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                          title="Mark as Complete"
+                        >
+                          <CheckSquare size={18} />
+                        </button>
+                      )}
+
+                      {/* Delete Button (If alone OR Admin) */}
+                      {(split.people_joined_ids.length === 1 || user.role === 'admin') && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm('Are you sure you want to delete this split?')) {
+                              const res = await api.splits.delete(split.id);
+                              if (res.success) {
+                                setMsg(res.message);
+                                fetchData();
+                              } else {
+                                alert(res.message);
+                              }
+                            }
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete Split"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {joined ? (
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm('Are you sure you want to delete this split?')) {
-                          const res = await api.splits.delete(split.id);
+                        // Different message for creator transferring ownership
+                        const confirmMsg = (split.creator_id === user?.id && split.people_joined_ids.length > 1)
+                          ? 'Leaving will transfer ownership to the next member. Continue?'
+                          : 'Are you sure you want to leave this split?';
+
+                        if (confirm(confirmMsg)) {
+                          const res = await api.splits.leave(split.id, user.id);
                           if (res.success) {
                             setMsg(res.message);
+                            // Update local user state
+                            updateUser({ ...user, active_split_id: null });
                             fetchData();
+                            setTimeout(() => setMsg(''), 3000);
                           } else {
                             alert(res.message);
                           }
                         }
                       }}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      title="Delete Split"
+                      className="px-5 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg font-semibold text-sm flex items-center gap-1 transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-                    </button>
-                  )}
-                  {joined ? (
-                    <button disabled className="px-5 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg font-semibold text-sm cursor-default flex items-center gap-1">
-                      <span>✓</span> Joined
+                      <span>X</span> Leave
                     </button>
                   ) : (
-                    <button
-                      onClick={() => handleJoin(split.id)}
-                      disabled={isFull}
-                      className={`px-6 py-2 rounded-lg font-semibold text-sm text-white shadow-md transition-all transform active:scale-95 ${isFull
-                        ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed shadow-none'
-                        : 'bg-gradient-to-r from-primary-600 to-orange-600 hover:from-primary-700 hover:to-orange-700 hover:shadow-primary-500/25'
-                        }`}
-                    >
-                      {isFull ? 'Full' : 'Join Split'}
-                    </button>
+                    !isClosed ? (
+                      <button
+                        onClick={() => handleJoin(split.id)}
+                        disabled={isFull}
+                        className={`px-6 py-2 rounded-lg font-semibold text-sm text-white shadow-md transition-all transform active:scale-95 ${isFull
+                          ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed shadow-none'
+                          : 'bg-gradient-to-r from-primary-600 to-orange-600 hover:from-primary-700 hover:to-orange-700 hover:shadow-primary-500/25'
+                          }`}
+                      >
+                        {isFull ? 'Full' : 'Join Split'}
+                      </button>
+                    ) : (
+                      <span className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded-lg text-sm font-medium">Completed</span>
+                    )
                   )}
                 </div>
               </div>
