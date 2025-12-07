@@ -67,7 +67,9 @@ export interface MenuItem {
   vendor_id: string;
   name: string;
   price: number;
+  category?: string;
   is_active: boolean;
+  is_recommended?: boolean;
 }
 
 // Keep existing types for MealSplit to maintain feature compatibility
@@ -109,10 +111,18 @@ export interface Conversation {
     content: string;
     sender_id: string;
     created_at: string;
-    is_read: boolean; // "Global" read status for the last message
+    is_read: boolean;
   };
-  unread_counts: Record<string, number>; // { userId: count }
+  unread_counts: Record<string, number>;
   updated_at: string;
+}
+
+export interface SplitRequest {
+  id: string;
+  split_id: string;
+  requester_id: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
 }
 
 export interface Message {
@@ -122,4 +132,6 @@ export interface Message {
   content: string;
   is_read: boolean;
   created_at: string;
+  request_id?: string; // Optional link to a join request
+  request_status?: 'pending' | 'accepted' | 'rejected'; // Computed field for UI
 }

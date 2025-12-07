@@ -136,15 +136,15 @@ const Inbox: React.FC = () => {
     // Helper to get display info for a conversation
     const getConversationInfo = (conv: Conversation) => {
         const otherId = getOtherUserId(conv.id);
-        const details = conv.participant_details[otherId] || { name: 'Unknown', email: otherId };
+        const details = conv.participant_details?.[otherId] || { name: 'Unknown', email: otherId };
         // Override for Admin
         if (otherId === 'admin' || otherId === 'foodhunt101lpu@gmail.com') {
             return { name: 'Food-Hunt Team', email: 'admin', initial: 'F' };
         }
         return {
-            name: details.name,
-            email: details.email,
-            initial: (details.name || '?')[0].toUpperCase(),
+            name: details.name || 'Unknown',
+            email: details.email || '',
+            initial: (details.name || '?')[0]?.toUpperCase() || '?',
             avatar: details.avatar
         };
     };
@@ -184,7 +184,7 @@ const Inbox: React.FC = () => {
                 // But fetchChatMessages (which calls getChat) works fine on empty collections.
                 // The tricky part is the "Header" showing the name if the conversation doesn't exist yet.
                 // We can seed `fetchedUsers` for that.
-                setFetchedUsers(prev => ({ ...prev, [targetId]: { name: targetUser.name, email: targetUser.email } }));
+                setFetchedUsers(prev => ({ ...prev, [targetId]: { name: targetUser.name, email: targetUser.email, initial: targetUser.name?.[0] || '?' } }));
 
             } else {
                 // Handle "Start chat with 'unknown' if we want?" For now just alert or ignore
@@ -371,7 +371,7 @@ const Inbox: React.FC = () => {
                     {conversations.map(conv => {
                         const { name, email, initial } = getConversationInfo(conv);
                         const isSelected = selectedChats.has(conv.id);
-                        const unread = conv.unread_counts[user?.id || ''] || 0;
+                        const unread = conv.unread_counts?.[user?.id || ''] || 0;
 
                         return (
                             <div
@@ -401,12 +401,12 @@ const Inbox: React.FC = () => {
                                             <span className="text-xs text-gray-500 dark:text-gray-400 opacity-75 flex-shrink-0">#{email}</span>
                                         </div>
                                         <span className={`text-xs flex-shrink-0 ${unread > 0 ? 'text-primary-600 font-bold' : 'text-gray-500 dark:text-gray-400'}`}>
-                                            {formatTime(conv.last_message.created_at)}
+                                            {formatTime(conv.last_message?.created_at)}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate pr-2">
-                                            {conv.last_message.content}
+                                            {conv.last_message?.content || 'No messages'}
                                         </p>
                                         {unread > 0 && activeChatId !== conv.id && (
                                             <span className="bg-primary-600 rounded-full w-2.5 h-2.5 block"></span>
@@ -463,6 +463,39 @@ const Inbox: React.FC = () => {
                                         <div className="break-words">
                                             {msg.content}
                                         </div>
+                                        {msg.request_id && !isMe && msg.request_status === 'pending' && (
+                                            <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        const res = await api.splits.respondToRequest(msg.request_id!, 'accepted');
+                                                        if (res.success) {
+                                                            // Update local message state to hide buttons
+                                                            setActiveMessages(prev => prev.map(m => m.id === msg.id ? { ...m, request_status: 'accepted' } : m));
+                                                        } else alert(res.message);
+                                                    }}
+                                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-xs font-bold"
+                                                >
+                                                    Accept
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        const res = await api.splits.respondToRequest(msg.request_id!, 'rejected');
+                                                        if (res.success) {
+                                                            // Update local message state to hide buttons
+                                                            setActiveMessages(prev => prev.map(m => m.id === msg.id ? { ...m, request_status: 'rejected' } : m));
+                                                        } else alert(res.message);
+                                                    }}
+                                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-xs font-bold"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        )}
+                                        {msg.request_id && msg.request_status && msg.request_status !== 'pending' && (
+                                            <div className="mt-2 text-xs italic text-gray-500">
+                                                {msg.request_status === 'accepted' ? 'Request Accepted' : 'Request Rejected'}
+                                            </div>
+                                        )}
                                         <div className={`flex justify-end items-center gap-1 text-[10px] mt-1 ${isMe ? 'text-primary-100' : 'text-gray-400'}`}>
                                             <span>
                                                 {formatTime(msg.created_at)}

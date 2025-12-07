@@ -20,12 +20,23 @@ const VendorDetail: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
 
     const [showMenuModal, setShowMenuModal] = useState(false);
+    const [showListModal, setShowListModal] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [menuItems, setMenuItems] = useState<any[]>([]);
 
     // Initial image index reset when modal opens
     useEffect(() => {
         if (showMenuModal) setCurrentImageIndex(0);
     }, [showMenuModal]);
+
+    // Fetch menu items for list view
+    useEffect(() => {
+        if (showListModal && id && menuItems.length === 0) {
+            api.vendors.getMenuItems(id).then(res => {
+                if (res.success && res.data) setMenuItems(res.data);
+            });
+        }
+    }, [showListModal, id, menuItems.length]);
 
     useEffect(() => {
         if (!id) return;
@@ -134,27 +145,56 @@ const VendorDetail: React.FC = () => {
                         <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{vendor.description}</p>
                     </div>
 
-                    {/* Menu Section (Simplified as per prompt requirements) */}
+                    {/* Menu Section (Restored + Button) */}
                     <div className="bg-gradient-to-br from-white to-orange-50/50 dark:bg-none dark:bg-dark-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                        <h2 className="text-xl font-bold mb-4 dark:text-white flex items-center gap-2"><DollarSign size={20} /> Menu Highlights</h2>
-                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 relative group cursor-pointer" onClick={() => setShowMenuModal(true)}>
-                            <img src={vendor.menu_image_urls?.[0]} alt="Menu Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <span className="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 group-hover:scale-100 transition-all">
-                                    {vendor.menu_image_urls?.length && vendor.menu_image_urls.length > 1 ? `View Full Menu (${vendor.menu_image_urls.length} pages)` : 'View Full Menu'}
-                                </span>
-                            </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold dark:text-white flex items-center gap-2"><DollarSign size={20} /> Menu Highlights</h2>
                             <button
-                                onClick={(e) => { e.stopPropagation(); setShowMenuModal(true); }}
-                                className="absolute bottom-4 right-4 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-full text-xs flex items-center gap-2 transition-colors shadow-lg backdrop-blur-sm"
+                                onClick={() => setShowListModal(true)}
+                                className="text-sm bg-primary-100 hover:bg-primary-200 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
                             >
-                                <Eye size={14} />
-                                Menu Preview
+                                <Eye size={14} /> View Menu List
                             </button>
                         </div>
-                        <div className="mt-4 flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                            <span>Lowest Item: <b>₹{vendor.lowest_item_price}</b></span>
-                            <span>Average Meal: <b>₹{vendor.avg_price_per_meal}</b></span>
+
+                        {/* Menu Preview Card */}
+                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 relative group cursor-pointer border dark:border-gray-700" onClick={() => setShowMenuModal(true)}>
+                            {vendor.menu_image_urls && vendor.menu_image_urls.length > 0 ? (
+                                <>
+                                    <img
+                                        src={vendor.menu_image_urls[0]}
+                                        alt="Menu Preview"
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <span className="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold shadow-lg transform scale-90 group-hover:scale-100 transition-all text-sm">
+                                            {vendor.menu_image_urls.length > 1 ? `View Full Menu images (${vendor.menu_image_urls.length} pages)` : 'View Full Menu images'}
+                                        </span>
+                                    </div>
+                                    <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs flex items-center gap-2 shadow-lg backdrop-blur-sm pointer-events-none">
+                                        <Eye size={14} />
+                                        Menu Preview
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                                    No menu images available
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4 flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex justify-between">
+                                <span>Lowest Item: <b>₹{vendor.lowest_item_price}</b></span>
+                                <span>Average Meal: <b>₹{vendor.avg_price_per_meal}</b></span>
+                            </div>
+                            {vendor.recommended_item_name && (
+                                <div className="pt-3 border-t dark:border-gray-700 text-center">
+                                    <span className="text-purple-600 dark:text-purple-400 font-bold flex items-center justify-center gap-2 bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg">
+                                        <Star size={16} className="fill-current" /> Recommended: {vendor.recommended_item_name} <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(₹{vendor.recommended_item_price})</span>
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -229,7 +269,7 @@ const VendorDetail: React.FC = () => {
 
             </div>
 
-            {/* Full Screen Menu Modal */}
+            {/* Full Screen Menu Modal (Image Preview) */}
             {showMenuModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => setShowMenuModal(false)}>
                     <button onClick={() => setShowMenuModal(false)} className="absolute top-4 right-4 text-white/70 hover:text-white z-50">
@@ -281,7 +321,73 @@ const VendorDetail: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* Full Screen Menu List Modal */}
+            {showListModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => setShowListModal(false)}>
+                    <div className="bg-white dark:bg-dark-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
+                            <h2 className="text-xl font-bold dark:text-white flex items-center gap-2"><DollarSign size={20} /> Menu List</h2>
+                            <button onClick={() => setShowListModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                            {menuItems.length === 0 ? (
+                                <p className="text-center text-gray-500 py-8">Loading menu items...</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {/* Group items by category */}
+                                    {(() => {
+                                        const grouped = menuItems.reduce((acc, item) => {
+                                            const cat = item.category || 'General';
+                                            if (!acc[cat]) acc[cat] = [];
+                                            acc[cat].push(item);
+                                            return acc;
+                                        }, {} as Record<string, any[]>);
+                                        const CategorySection = ({ title, items }: { title: string, items: any[] }) => {
+                                            const [isOpen, setIsOpen] = useState(false);
+                                            return (
+                                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                    <button
+                                                        onClick={() => setIsOpen(!isOpen)}
+                                                        className="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                    >
+                                                        <span className="font-bold text-gray-900 dark:text-white text-lg">{title}</span>
+                                                        <ChevronLeft size={20} className={`transform transition-transform text-gray-500 ${isOpen ? '-rotate-90' : 'rotate-180'}`} />
+                                                    </button>
+                                                    {isOpen && (
+                                                        <div className="bg-white dark:bg-dark-800 divide-y divide-gray-100 dark:divide-gray-700">
+                                                            {items.map((item: any, idx: number) => (
+                                                                <div key={idx} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                                                    <div>
+                                                                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                                            {item.name}
+                                                                            {item.is_recommended && <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-200"><Star size={10} className="fill-current" /> Recommended</span>}
+                                                                        </h3>
+                                                                    </div>
+                                                                    <span className="font-bold text-green-600">₹{item.price}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        };
+
+                                        return Object.entries(grouped).map(([category, items]) => (
+                                            <div key={category}>
+                                                <CategorySection title={category} items={items} />
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div >
+            )}
+        </div >
     );
 };
 

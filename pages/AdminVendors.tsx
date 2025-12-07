@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
-import { UserRole, Vendor } from '../types';
-import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle } from 'lucide-react';
+import { UserRole, Vendor, MenuItem } from '../types';
+import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle, Utensils, Star } from 'lucide-react';
 
 const AdminVendors: React.FC = () => {
   const { user } = useAuth();
@@ -19,6 +19,15 @@ const AdminVendors: React.FC = () => {
 
   // Delete Confirmation State
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Menu Management State
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [selectedVendorForMenu, setSelectedVendorForMenu] = useState<Vendor | null>(null);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [newMenuItemName, setNewMenuItemName] = useState('');
+  const [newMenuItemPrice, setNewMenuItemPrice] = useState('');
+  const [newMenuItemCategory, setNewMenuItemCategory] = useState('');
+  const [addingMenuItem, setAddingMenuItem] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== UserRole.ADMIN) {
@@ -35,6 +44,68 @@ const AdminVendors: React.FC = () => {
       setVendors(res.data);
     }
     setLoading(false);
+  };
+
+  const openMenuModal = async (vendor: Vendor) => {
+    setSelectedVendorForMenu(vendor);
+    const res = await api.vendors.getMenuItems(vendor.id);
+    if (res.success && res.data) {
+      setMenuItems(res.data);
+    }
+    setIsMenuModalOpen(true);
+  };
+
+  const handleAddMenuItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVendorForMenu || !newMenuItemName || !newMenuItemPrice) return;
+
+    setAddingMenuItem(true);
+    const res = await api.vendors.addMenuItem(
+      selectedVendorForMenu.id,
+      newMenuItemName,
+      parseFloat(newMenuItemPrice),
+      newMenuItemCategory || undefined
+    );
+
+    if (res.success && res.data) {
+      setMenuItems([...menuItems, res.data]);
+      setNewMenuItemName('');
+      setNewMenuItemPrice('');
+      setNewMenuItemCategory('');
+    } else {
+      alert(res.message);
+    }
+    setAddingMenuItem(false);
+  };
+
+
+
+  const handleDeleteMenuItem = async (itemId: string) => {
+    if (!window.confirm("Delete this menu item?")) return;
+    const res = await api.vendors.deleteMenuItem(itemId);
+    if (res.success) {
+      setMenuItems(menuItems.filter(item => item.id !== itemId));
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const handleToggleRecommended = async (item: MenuItem) => {
+    // If already true, we can't 'unset' it via logic easily unless we decide no recommended item. 
+    // Usually toggle means On/Off. Let's allow turning it off too? 
+    // Logic in mock database sets it to true. If we want to unset, we need another call or updateMenuItem.
+    // For now, assume we just want to mark 'This is the one'.
+    if (item.is_recommended) return; // Already recommended
+
+    const res = await api.vendors.setRecommendedItem(item.vendor_id, item.id);
+    if (res.success) {
+      setMenuItems(menuItems.map(i => ({
+        ...i,
+        is_recommended: i.id === item.id
+      })));
+    } else {
+      alert(res.message);
+    }
   };
 
   const handleToggleStatus = async (vendor: Vendor) => {
@@ -62,8 +133,8 @@ const AdminVendors: React.FC = () => {
       logo_url: 'https://picsum.photos/200',
       menu_image_urls: ['https://picsum.photos/800/600'],
       contact_number: '1234567890',
-      lowest_item_price: 5, avg_price_per_meal: 10, popularity_score: 80, is_active: true,
-      sort_order: 999, is_featured: false, recommended_item_name: '', recommended_item_price: 0
+      popularity_score: 80, is_active: true,
+      sort_order: 999, is_featured: false
     });
     setIsEditing(false);
     setIsModalOpen(true);
@@ -137,7 +208,7 @@ const AdminVendors: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 rounded-full object-cover" src={vendor.menu_image_urls?.[0] || vendor.logo_url} alt="" />
+                          <img className="h-10 w-10 rounded-full object-cover" src={vendor.logo_url || vendor.menu_image_urls?.[0]} alt="" />
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
@@ -168,6 +239,11 @@ const AdminVendors: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button onClick={() => openEditModal(vendor)} className="text-primary-600 hover:text-primary-900 dark:hover:text-primary-400 inline-flex items-center gap-1">
                         <Edit size={16} />
+                      </button>
+                      <button onClick={() => promptDelete(vendor.id)} className="text-red-600 hover:text-red-900 dark:hover:text-red-400 inline-flex items-center gap-1">
+                      </button>
+                      <button onClick={() => openMenuModal(vendor)} className="text-secondary-600 hover:text-secondary-900 dark:hover:text-secondary-400 inline-flex items-center gap-1" title="Manage Menu">
+                        <Utensils size={16} />
                       </button>
                       <button onClick={() => promptDelete(vendor.id)} className="text-red-600 hover:text-red-900 dark:hover:text-red-400 inline-flex items-center gap-1">
                         <Trash2 size={16} />
@@ -227,27 +303,11 @@ const AdminVendors: React.FC = () => {
                     {['low', 'mid', 'high'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lowest Price ($)</label>
-                  <input name="lowest_item_price" type="number" value={currentVendor.lowest_item_price} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Avg Price ($)</label>
-                  <input name="avg_price_per_meal" type="number" value={currentVendor.avg_price_per_meal} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
-                </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Number</label>
                   <input name="contact_number" type="text" value={currentVendor.contact_number || ''} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
                 </div>
 
-                <div className="md:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recommended Item Name</label>
-                  <input name="recommended_item_name" type="text" value={currentVendor.recommended_item_name || ''} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
-                </div>
-                <div className="md:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recommended Item Price ($)</label>
-                  <input name="recommended_item_price" type="number" value={currentVendor.recommended_item_price || ''} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
-                </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo URL</label>
                   <input name="logo_url" type="text" value={currentVendor.logo_url} onChange={handleChange} className="w-full p-2 border rounded dark:bg-dark-900 dark:border-gray-600 dark:text-white" />
@@ -338,6 +398,109 @@ const AdminVendors: React.FC = () => {
             </div>
           )
         }
+
+        {/* Menu Management Modal */}
+        {isMenuModalOpen && selectedVendorForMenu && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-dark-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                <div>
+                  <h2 className="text-xl font-bold dark:text-white">Manage Menu</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">for {selectedVendorForMenu.name}</p>
+                </div>
+                <button onClick={() => setIsMenuModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400"><X size={24} /></button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar dark:bg-dark-900">
+                {/* Add Item Form */}
+                <form onSubmit={handleAddMenuItem} className="flex gap-4 mb-8 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700">
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Item Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Butter Chicken"
+                      value={newMenuItemName}
+                      onChange={(e) => setNewMenuItemName(e.target.value)}
+                      className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Starters"
+                      value={newMenuItemCategory}
+                      onChange={(e) => setNewMenuItemCategory(e.target.value)}
+                      className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Price (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      placeholder="99"
+                      value={newMenuItemPrice}
+                      onChange={(e) => setNewMenuItemPrice(e.target.value)}
+                      className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="submit"
+                      disabled={addingMenuItem}
+                      className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 h-[38px]"
+                    >
+                      <Plus size={16} /> Add
+                    </button>
+                  </div>
+                </form>
+
+                {/* Items List */}
+                <div className="space-y-2">
+                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">Current Menu Items ({menuItems.length})</h3>
+                  {menuItems.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 italic bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                      No menu items found. Add one above!
+                    </div>
+                  ) : (
+                    <div className="bg-white dark:bg-dark-900 border dark:border-gray-700 rounded-lg divide-y dark:divide-gray-700">
+                      {menuItems.map(item => (
+                        <div key={item.id} className="p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <div>
+                            <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                              {item.name}
+                              {item.category && <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full">{item.category}</span>}
+                              {item.is_recommended && <Star size={14} className="fill-yellow-400 text-yellow-400" />}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => handleToggleRecommended(item)}
+                              className={`p-1 rounded transition-colors ${item.is_recommended ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:text-yellow-400'}`}
+                              title={item.is_recommended ? "Recommended Item" : "Mark as Recommended"}
+                            >
+                              <Star size={18} className={item.is_recommended ? "fill-yellow-400" : ""} />
+                            </button>
+                            <span className="font-bold text-green-600">₹{item.price}</span>
+                            <button
+                              onClick={() => handleDeleteMenuItem(item.id)}
+                              className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                              title="Delete Item"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

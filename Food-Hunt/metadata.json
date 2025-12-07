@@ -1,7 +1,0 @@
-{
-  "name": "FOOD-HUNT",
-  "description": "Find Food. Find Friends. The ultimate campus food discovery and social dining platform.",
-  "requestFramePermissions": [
-    "geolocation"
-  ]
-}

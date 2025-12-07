@@ -156,3 +156,39 @@ create policy "Users can view their messages" on public.messages for select usin
 );
 -- Users can send messages
 create policy "Users can send messages" on public.messages for insert with check (auth.uid()::text = sender_id);
+
+
+-- SPLIT JOIN REQUESTS TABLE (New Feature)
+create table public.split_join_requests (
+  id uuid default uuid_generate_v4() primary key,
+  split_id uuid references public.meal_splits(id) on delete cascade,
+  requester_id text references public.users(id),
+  status text default 'pending', -- 'pending', 'accepted', 'rejected'
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  unique(split_id, requester_id)
+);
+
+alter table public.split_join_requests enable row level security;
+-- Users can view their own requests and requests for splits they created
+create policy "Users can view relevant requests" on public.split_join_requests for select using (
+  auth.uid()::text = requester_id or 
+  exists (select 1 from public.meal_splits where id = split_id and creator_id = auth.uid()::text)
+);
+-- Users can create requests
+create policy "Users can create requests" on public.split_join_requests for insert with check (auth.uid()::text = requester_id);
+-- Creators can update status (accept/reject), Requesters can delete (cancel)
+create policy "Creators can update requests" on public.split_join_requests for update using (
+  exists (select 1 from public.meal_splits where id = split_id and creator_id = auth.uid()::text)
+);
+create policy "Requesters can delete requests" on public.split_join_requests for delete using (auth.uid()::text = requester_id);
+
+
+-- Add request_id to messages to link chat with approval actions
+alter table public.messages add column request_id uuid references public.split_join_requests(id);
+
+-- Add category to menu_items
+alter table public.menu_items add column category text;
+
+-- Add is_recommended to menu_items
+alter table public.menu_items add column is_recommended boolean default false;
+

@@ -14,6 +14,7 @@ interface CreateSplitModalProps {
 
 const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, onSubmit, vendors }) => {
   const [dish, setDish] = useState('');
+  const [menuItems, setMenuItems] = useState<{ name: string, price: number }[]>([]); // New state for dropdown
   const [vendorSearch, setVendorSearch] = useState('');
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [price, setPrice] = useState('');
@@ -38,6 +39,20 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
   const filteredVendors = vendors.filter(v =>
     v.name.toLowerCase().includes(vendorSearch.toLowerCase())
   );
+
+  // Fetch menu on vendor select
+  const handleSelectVendor = async (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+    setVendorSearch(vendor.name);
+    setShowDropdown(false);
+    // Fetch items
+    const res = await api.vendors.getMenuItems(vendor.id);
+    if (res.success && res.data) {
+      setMenuItems(res.data);
+    } else {
+      setMenuItems([]);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,14 +93,32 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dish Name</label>
-              <input
-                type="text"
-                value={dish}
-                onChange={(e) => setDish(e.target.value)}
-                placeholder="e.g. Family Size Pizza"
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                required
-              />
+              {selectedVendor && menuItems.length > 0 ? (
+                <select
+                  value={dish}
+                  onChange={(e) => {
+                    setDish(e.target.value);
+                    const item = menuItems.find(i => i.name === e.target.value);
+                    if (item) setPrice(item.price.toString());
+                  }}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                  required
+                >
+                  <option value="">Select a dish from menu</option>
+                  {menuItems.map((item, idx) => <option key={idx} value={item.name}>{item.name} (₹{item.price})</option>)}
+                  <option value="custom">Other (Custom)</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={dish}
+                  onChange={(e) => setDish(e.target.value)}
+                  placeholder={selectedVendor ? "Enter dish name (No menu found)" : "Select a vendor first"}
+                  disabled={!selectedVendor}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all disabled:opacity-50"
+                  required
+                />
+              )}
             </div>
 
             <div className="relative" ref={dropdownRef}>
@@ -113,11 +146,7 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
                     filteredVendors.map(vendor => (
                       <div
                         key={vendor.id}
-                        onClick={() => {
-                          setSelectedVendor(vendor);
-                          setVendorSearch(vendor.name);
-                          setShowDropdown(false);
-                        }}
+                        onClick={() => handleSelectVendor(vendor)}
                         className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-white flex justify-between items-center"
                       >
                         <span className="font-medium">{vendor.name}</span>
@@ -205,6 +234,7 @@ const MealSplits: React.FC = () => {
   const navigate = useNavigate();
   const [splits, setSplits] = useState<MealSplit[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [myRequests, setMyRequests] = useState<string[]>([]); // Split IDs I requested
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -240,36 +270,48 @@ const MealSplits: React.FC = () => {
     if (vendorsRes.success && vendorsRes.data) {
       setVendors(vendorsRes.data);
     }
+
+    // Fetch my requests
+    if (user) {
+      // @ts-ignore
+      const reqRes = await api.splits.getMyRequests(user.id);
+      if (reqRes.success && reqRes.data) {
+        setMyRequests(reqRes.data.map((r: any) => r.split_id));
+      }
+    }
     setLoading(false);
   };
 
-  const handleJoin = async (id: string) => {
+  const handleRequestJoin = async (id: string) => {
     if (!user) {
       alert("Please sign in to join a split.");
       navigate('/login');
       return;
     }
-
-    const splitToJoin = splits.find(s => s.id === id);
-    if (!splitToJoin) return;
-
-    const res = await api.splits.join(id, user.id);
+    const res = await api.splits.requestJoin(id, user.id);
     if (res.success) {
-      // Auto-send message to creator
-      await api.messages.send(
-        user.id,
-        splitToJoin.creator_id,
-        `Hii, I'd like to join your split of ${splitToJoin.dish_name} from ${splitToJoin.vendor_name}`
-      );
-
-      // Update local user context to reflect active split
-      updateUser({ ...user, active_split_id: id });
-
       setMsg(res.message);
-      fetchData();
+      fetchData(); // Refresh myRequests
       setTimeout(() => setMsg(''), 3000);
     } else {
       alert(res.message);
+    }
+  };
+
+  const handleCancelRequest = async (splitId: string) => {
+    // Find request id logic needed? Ideally we store request_id or just call delete with filter.
+    // Since API needs ID, we'd need to find it from fetch.
+    // Simplified: Assume we re-fetch requests and get their IDs.
+    // For now, let user know in UI or we quickly implement 'cancelBySplitId' or fetch active requests full data.
+    // Let's rely on 'getMyRequests' returning data with IDs.
+    const reqRes = await api.splits.getMyRequests(user!.id);
+    const req = reqRes.data?.find(r => r.split_id === splitId);
+    if (req) {
+      const res = await api.splits.cancelRequest(req.id);
+      if (res.success) {
+        setMsg("Request cancelled");
+        fetchData();
+      }
     }
   };
 
@@ -345,8 +387,9 @@ const MealSplits: React.FC = () => {
           const isFull = split.people_joined_ids.length >= split.people_needed;
           const isClosed = split.is_closed;
           const joined = user && split.people_joined_ids.includes(user.id);
+          const requested = user && myRequests.includes(split.id);
 
-          // Requirement: Hide full splits from non-members
+          // Requirement: Hide full splits from non-members (unless requested?)
           if (isFull && !joined) return null;
 
           const progress = (split.people_joined_ids.length / split.people_needed) * 100;
@@ -440,8 +483,8 @@ const MealSplits: React.FC = () => {
                         </button>
                       )}
 
-                      {/* Delete Button (If alone OR Admin) */}
-                      {(split.people_joined_ids.length === 1 || user.role === 'admin') && (
+                      {/* Delete Button (Creator OR Admin) */}
+                      {(split.creator_id === user.id || user.role === 'admin') && (
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -492,16 +535,25 @@ const MealSplits: React.FC = () => {
                     </button>
                   ) : (
                     !isClosed ? (
-                      <button
-                        onClick={() => handleJoin(split.id)}
-                        disabled={isFull}
-                        className={`px-6 py-2 rounded-lg font-semibold text-sm text-white shadow-md transition-all transform active:scale-95 ${isFull
-                          ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed shadow-none'
-                          : 'bg-gradient-to-r from-primary-600 to-orange-600 hover:from-primary-700 hover:to-orange-700 hover:shadow-primary-500/25'
-                          }`}
-                      >
-                        {isFull ? 'Full' : 'Join Split'}
-                      </button>
+                      requested ? (
+                        <button
+                          onClick={() => handleCancelRequest(split.id)}
+                          className="px-6 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg font-semibold text-sm transition-colors"
+                        >
+                          Request Sent
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleRequestJoin(split.id)}
+                          disabled={isFull}
+                          className={`px-6 py-2 rounded-lg font-semibold text-sm text-white shadow-md transition-all transform active:scale-95 ${isFull
+                            ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed shadow-none'
+                            : 'bg-gradient-to-r from-primary-600 to-orange-600 hover:from-primary-700 hover:to-orange-700 hover:shadow-primary-500/25'
+                            }`}
+                        >
+                          {isFull ? 'Full' : 'Request to Join'}
+                        </button>
+                      )
                     ) : (
                       <span className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded-lg text-sm font-medium">Completed</span>
                     )
