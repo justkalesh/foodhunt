@@ -1,37 +1,19 @@
 import admin from 'firebase-admin';
 import { createClient } from '@supabase/supabase-js';
 
-let initError = null;
-
 // Initialize Firebase Admin (Singleton)
 if (!admin.apps.length) {
     try {
-        let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-        if (!key) throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is missing');
-
-        // Sanitize: Remove wrapping quotes if present (common copy-paste error)
-        key = key.trim();
-        if (key.startsWith('"') && key.endsWith('"')) {
-            key = key.slice(1, -1);
-        }
-        // Handle escaped newlines if they were pasted literally
-        key = key.replace(/\\n/g, '\n');
-
-        const serviceAccount = JSON.parse(key);
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
     } catch (error) {
         console.error('Firebase Admin Init Error:', error);
-        initError = error;
     }
 }
 
 export default async function handler(request, response) {
-    if (initError) {
-        return response.status(500).json({ error: 'Firebase Init Failed: ' + initError.message });
-    }
-
     if (request.method !== 'POST') {
         return response.status(405).json({ error: 'Method not allowed' });
     }
@@ -43,13 +25,37 @@ export default async function handler(request, response) {
     }
 
     try {
+        // 1. Get User's FCM Token from Supabase (or we can pass it if we have it, but simpler to fetch here to ensure validity or multiple tokens?)
+        // Ideally the caller passes the token OR we look it up.
+        // Since we are mocking the db calls in client, this API route needs its own DB connection OR 
+        // we can just pass the token from the client if the client knows it? 
+        // No, the Sender (User A) doesn't know User B's token. The server must look it up.
+        // We can use Supabase REST API here or just `supabase-js` if we initialize it.
+        // Let's use `supabase-js`.
+
+        // Wait, 'supabase' imported from 'services/supabase' is client-side.
+        // We need a server-side supabase client or just raw fetch.
+        // To save time installing more deps/config, let's assume we can import the same client if it creates an anonymous client, 
+        // BUT we need SERVICE_ROLE_KEY to bypass RLS if users can't read other users' tokens.
+        // Standard users probably can't read `fcm_token` of others.
+        // SO we need a robust way. 
+
+        // OPTION B: The caller (Client) passes the `fcm_token` of target?
+        // Client doesn't have it.
+
+        // OPTION C: Initialize Supabase Admin here.
+        // We likely have `SUPABASE_SERVICE_ROLE_KEY` or similar in env.
+
+        // Let's rely on `process.env.SUPABASE_URL` and `process.env.SUPABASE_SERVICE_ROLE_KEY`.
+
+
         const supabaseUrl = process.env.VITE_SUPABASE_URL;
-        // Accept both detailed service role key or fallback to standard key configs
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_KEY;
 
         console.log('--- DEBUG: api/send-push.js ---');
         console.log('VITE_SUPABASE_URL exists:', !!supabaseUrl);
         console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+        console.log('VITE_SUPABASE_KEY exists:', !!(process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_KEY));
         console.log('Resulting supabaseKey exists:', !!supabaseKey);
 
         const supabase = createClient(supabaseUrl, supabaseKey);

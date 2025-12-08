@@ -23,14 +23,6 @@ firebase.initializeApp({
 // messages.
 const messaging = firebase.messaging();
 
-// Force SW to activate immediately
-self.addEventListener('install', (event) => {
-    self.skipWaiting();
-});
-self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
-});
-
 messaging.onBackgroundMessage(function (payload) {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
     // Customize notification here
