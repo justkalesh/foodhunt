@@ -1,19 +1,31 @@
 import admin from 'firebase-admin';
 import { createClient } from '@supabase/supabase-js';
 
+let initError = null;
+
 // Initialize Firebase Admin (Singleton)
 if (!admin.apps.length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+        const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        if (!key) throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is missing');
+
+        const serviceAccount = JSON.parse(key || '{}');
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
     } catch (error) {
         console.error('Firebase Admin Init Error:', error);
+        initError = error.message;
     }
 }
 
 export default async function handler(request, response) {
+    if (initError) {
+        return response.status(500).json({ error: 'Firebase Init Failed: ' + initError });
+    }
+    if (!admin.apps.length) {
+        return response.status(500).json({ error: 'Firebase Admin not initialized (Unknown reason)' });
+    }
     if (request.method !== 'POST') {
         return response.status(405).json({ error: 'Method not allowed' });
     }
