@@ -23,6 +23,14 @@ firebase.initializeApp({
 // messages.
 const messaging = firebase.messaging();
 
+// Force SW to activate immediately
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
+});
+
 messaging.onBackgroundMessage(function (payload) {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
     // Customize notification here
@@ -32,6 +40,7 @@ messaging.onBackgroundMessage(function (payload) {
         icon: '/logo.png'
     };
 
-    self.registration.showNotification(notificationTitle,
-        notificationOptions);
+    // If the payload has a 'notification' property, the SDK handles it automatically.
+    // Uncommenting the below line will verify reception but might cause duplicates.
+    // self.registration.showNotification(notificationTitle, notificationOptions);
 });

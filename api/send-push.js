@@ -50,12 +50,12 @@ export default async function handler(request, response) {
 
 
         const supabaseUrl = process.env.VITE_SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_KEY;
 
         console.log('--- DEBUG: api/send-push.js ---');
         console.log('VITE_SUPABASE_URL exists:', !!supabaseUrl);
         console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-        console.log('VITE_SUPABASE_ANON_KEY exists:', !!process.env.VITE_SUPABASE_ANON_KEY);
+        console.log('VITE_SUPABASE_KEY exists:', !!(process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_KEY));
         console.log('Resulting supabaseKey exists:', !!supabaseKey);
 
         const supabase = createClient(supabaseUrl, supabaseKey);
