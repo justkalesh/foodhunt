@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
 import { MealSplit, Vendor } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Users, Clock, PlusCircle, X, Search, MapPin, CheckSquare } from 'lucide-react';
+import { Users, Clock, PlusCircle, X, Search, MapPin, CheckSquare, Share2 } from 'lucide-react';
 
 interface CreateSplitModalProps {
   isOpen: boolean;
@@ -369,6 +369,24 @@ const MealSplits: React.FC = () => {
     });
   };
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Food Hunt - Meal Splits',
+          text: 'Check out these meal splits on Food Hunt!',
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setMsg('Link copied to clipboard!');
+      setTimeout(() => setMsg(''), 3000);
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
@@ -405,16 +423,25 @@ const MealSplits: React.FC = () => {
             Join forces with other foodies. Split the cost, share the joy, and enjoy premium meals for a fraction of the price.
           </p>
         </div>
-        <button
-          onClick={() => {
-            if (!user) navigate('/login');
-            else setIsModalOpen(true);
-          }}
-          className="group bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-primary-500/30 transition-all duration-300 flex items-center gap-2 font-semibold transform hover:-translate-y-0.5"
-        >
-          <PlusCircle size={22} className="group-hover:rotate-90 transition-transform duration-300" />
-          Start a New Split
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={handleShare}
+            className="group bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 font-semibold"
+            title="Share page"
+          >
+            <Share2 size={22} className="group-hover:scale-110 transition-transform duration-300" />
+          </button>
+          <button
+            onClick={() => {
+              if (!user) navigate('/login');
+              else setIsModalOpen(true);
+            }}
+            className="group bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-primary-500/30 transition-all duration-300 flex items-center gap-2 font-semibold transform hover:-translate-y-0.5"
+          >
+            <PlusCircle size={22} className="group-hover:rotate-90 transition-transform duration-300" />
+            Start a New Split
+          </button>
+        </div>
       </div>
 
       {msg && (

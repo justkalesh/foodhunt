@@ -2,9 +2,40 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/mockDatabase';
-import { Vendor, Review } from '../types';
+import { Vendor, Review, MenuItem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { MapPin, Clock, DollarSign, Star, ChevronLeft, Send, Flame, BarChart, Trash2, Eye, X, Phone } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Star, ChevronLeft, Send, Flame, BarChart, Trash2, Eye, X, Phone, Share2, ChevronDown, ChevronUp } from 'lucide-react';
+
+const CategorySection = ({ title, items }: { title: string, items: MenuItem[] }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                type="button"
+            >
+                <span className="font-bold text-gray-900 dark:text-white text-lg">{title}</span>
+                <ChevronLeft size={20} className={`transform transition-transform text-gray-500 ${isOpen ? '-rotate-90' : 'rotate-180'}`} />
+            </button>
+            {isOpen && (
+                <div className="bg-white dark:bg-dark-800 divide-y divide-gray-100 dark:divide-gray-700">
+                    {items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    {item.name}
+                                    {item.is_recommended && <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-200"><Star size={10} className="fill-current" /> Recommended</span>}
+                                </h3>
+                            </div>
+                            <span className="font-bold text-green-600">₹{item.price}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const VendorDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -22,7 +53,7 @@ const VendorDetail: React.FC = () => {
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [showListModal, setShowListModal] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [menuItems, setMenuItems] = useState<any[]>([]);
+    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
     // Initial image index reset when modal opens
     useEffect(() => {
@@ -88,6 +119,24 @@ const VendorDetail: React.FC = () => {
         }
     };
 
+    const handleShare = async () => {
+        if (!vendor) return;
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Food Hunt - ${vendor.name}`,
+                    text: `Check out ${vendor.name} on Food Hunt!`,
+                    url: window.location.href,
+                });
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+        }
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center dark:text-white">Loading Vendor Details...</div>;
     if (!vendor) return <div className="p-10 text-center dark:text-white">Vendor not found.</div>;
 
@@ -100,6 +149,13 @@ const VendorDetail: React.FC = () => {
                 <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
                     <div className="max-w-7xl mx-auto">
                         <Link to="/vendors" className="text-white/80 hover:text-white flex items-center gap-1 text-sm mb-2"><ChevronLeft size={16} /> Back to List</Link>
+                        <button
+                            onClick={handleShare}
+                            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-sm"
+                            title="Share"
+                        >
+                            <Share2 size={24} />
+                        </button>
                         <div className="flex items-center gap-4 mb-2">
                             {vendor.logo_url && (
                                 <img src={vendor.logo_url} alt="Logo" className="w-16 h-16 rounded-full border-2 border-white shadow-lg object-cover" />
@@ -344,36 +400,7 @@ const VendorDetail: React.FC = () => {
                                             if (!acc[cat]) acc[cat] = [];
                                             acc[cat].push(item);
                                             return acc;
-                                        }, {} as Record<string, any[]>);
-                                        const CategorySection = ({ title, items }: { title: string, items: any[] }) => {
-                                            const [isOpen, setIsOpen] = useState(false);
-                                            return (
-                                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                                                    <button
-                                                        onClick={() => setIsOpen(!isOpen)}
-                                                        className="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                                    >
-                                                        <span className="font-bold text-gray-900 dark:text-white text-lg">{title}</span>
-                                                        <ChevronLeft size={20} className={`transform transition-transform text-gray-500 ${isOpen ? '-rotate-90' : 'rotate-180'}`} />
-                                                    </button>
-                                                    {isOpen && (
-                                                        <div className="bg-white dark:bg-dark-800 divide-y divide-gray-100 dark:divide-gray-700">
-                                                            {items.map((item: any, idx: number) => (
-                                                                <div key={idx} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                                                    <div>
-                                                                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                                                            {item.name}
-                                                                            {item.is_recommended && <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-200"><Star size={10} className="fill-current" /> Recommended</span>}
-                                                                        </h3>
-                                                                    </div>
-                                                                    <span className="font-bold text-green-600">₹{item.price}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        };
+                                        }, {} as Record<string, MenuItem[]>);
 
                                         return Object.entries(grouped).map(([category, items]) => (
                                             <div key={category}>
