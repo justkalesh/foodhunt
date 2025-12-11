@@ -612,9 +612,9 @@ const MealSplits: React.FC = () => {
                       requested ? (
                         <button
                           onClick={() => handleCancelRequest(split.id)}
-                          className="px-6 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg font-semibold text-sm transition-colors"
+                          className="px-6 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg font-semibold text-sm transition-all shadow-sm hover:shadow-md active:scale-95"
                         >
-                          Request Sent
+                          Withdraw Request
                         </button>
                       ) : (
                         <button

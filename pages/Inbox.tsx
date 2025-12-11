@@ -567,7 +567,7 @@ const Inbox: React.FC = () => {
                                         setActiveMessages([]); // Clear previous to show loading state or empty first
                                     }
                                 }}
-                                className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${activeChatId === conv.id && !isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''}`}
+                                className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800 ${activeChatId === conv.id && !isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''}`}
                             >
                                 {isSelectionMode && (
                                     <div className="text-primary-600">
@@ -586,7 +586,7 @@ const Inbox: React.FC = () => {
                                         <span className="absolute top-0 right-0 bg-primary-600 rounded-full w-3 h-3 border-2 border-white dark:border-gray-900"></span>
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-baseline mb-1">
                                         <div className="flex items-baseline gap-1 min-w-0 pr-2">
                                             <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{name}</h3>

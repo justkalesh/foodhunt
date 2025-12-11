@@ -416,8 +416,52 @@ export const api = {
 
     cancelRequest: async (requestId: string): Promise<GenericResponse<null>> => {
       try {
+        // 1. Get request info if needed
+        const { data: request } = await supabase.from('split_join_requests').select('*').eq('id', requestId).single();
+
+        let conversationId = null;
+
+        if (request) {
+          // 2. Find the automated message (This likely holds the FK constraint preventing request deletion)
+          const { data: message } = await supabase.from('messages').select('id, conversation_id').eq('request_id', requestId).single();
+
+          if (message) {
+            conversationId = message.conversation_id;
+            // 3. Delete the message FIRST
+            await supabase.from('messages').delete().eq('id', message.id);
+          }
+        }
+
+        // 4. Delete Request (Now safe if FK was the issue)
         const { error } = await supabase.from('split_join_requests').delete().eq('id', requestId);
         if (error) throw error;
+
+        // 5. Check if conversation is empty and clean up
+        if (conversationId) {
+          const { count, data: remainingMessages } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact' })
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (count === 0 || !remainingMessages || remainingMessages.length === 0) {
+            await supabase.from('conversations').delete().eq('id', conversationId);
+          } else {
+            // Conversation not empty, update last_message to the new latest one
+            const newLastMsg = remainingMessages[0];
+            await supabase.from('conversations').update({
+              last_message: {
+                content: newLastMsg.content,
+                sender_id: newLastMsg.sender_id,
+                created_at: newLastMsg.created_at,
+                is_read: newLastMsg.is_read
+              },
+              updated_at: newLastMsg.created_at
+            }).eq('id', conversationId);
+          }
+        }
+
         return { success: true, message: 'Request cancelled.' };
       } catch (error: any) {
         return { success: false, message: error.message };
