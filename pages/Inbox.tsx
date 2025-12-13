@@ -9,6 +9,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 
 
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { supabase } from '../services/supabase';
 
 const Inbox: React.FC = () => {
     const { user } = useAuth();
@@ -54,6 +55,7 @@ const Inbox: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const sidebarMenuRef = useRef<HTMLDivElement>(null);
 
+
     // Initial Auth Check and Inbox Fetch
     useEffect(() => {
         if (!user) {
@@ -82,23 +84,84 @@ const Inbox: React.FC = () => {
             }
         }
 
-        // Poll Inbox (slowly)
-        const interval = setInterval(fetchInbox, 10000);
-        return () => clearInterval(interval);
+        // Realtime Subscription for Inbox Updates (New conversations or updates)
+        const channel = supabase
+            .channel('inbox_updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'conversations'
+                },
+                (payload) => {
+                    // Ideally check if user is participant, but payload.new might be partial.
+                    // Simple approach: Refetch inbox on ANY conversation change.
+                    // Optimization: Check if payload.new['participants'] includes user.id if available.
+                    console.log('[Realtime] Inbox update detected', payload);
+                    fetchInbox();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [user, navigate, location.search]);
 
-    // Active Chat Polling (Fast)
+    const fetchChatMessages = React.useCallback(async (convId: string) => {
+        const res = await api.messages.getChat(convId);
+        if (res.success && res.data) {
+            setActiveMessages(res.data);
+        }
+    }, [activeMessages]);
+
+    // Active Chat Realtime Subscription
     useEffect(() => {
         if (!activeChatId || !user) return;
 
         fetchChatMessages(activeChatId);
-        const interval = setInterval(() => fetchChatMessages(activeChatId), 3000); // 3s poll for active chat
 
-        // Mark as read immediately when opening/polling
+        // Mark as read immediately
         api.messages.markAsRead(activeChatId, user.id);
 
-        return () => clearInterval(interval);
-    }, [activeChatId, user]);
+        const channel = supabase
+            .channel(`chat_${activeChatId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `conversation_id=eq.${activeChatId}`
+                },
+                (payload) => {
+                    console.log('[Realtime] New message received', payload.new);
+                    const newMsg = payload.new as Message;
+
+                    if (newMsg.request_id) {
+                        // For requests, we need enriched data (status), so refetching is safer/easier
+                        fetchChatMessages(activeChatId);
+                    } else {
+                        // For standard text messages, just append them! (Much faster/cheaper)
+                        setActiveMessages(prev => {
+                            if (prev.find(m => m.id === newMsg.id)) return prev;
+                            return [...prev, newMsg];
+                        });
+                    }
+
+                    // Mark read if we are looking at it and it's not our own message
+                    if (newMsg.sender_id !== user.id) {
+                        api.messages.markAsRead(activeChatId, user.id);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [activeChatId, user, fetchChatMessages]);
 
     // Only scroll to bottom if we are already near bottom OR if it's the first load (loading state check?)
     // Actually, simple fix: Only scroll if the last message is NEW or if we just switched chats.
@@ -289,12 +352,7 @@ const Inbox: React.FC = () => {
     };
 
 
-    const fetchChatMessages = async (convId: string) => {
-        const res = await api.messages.getChat(convId);
-        if (res.success && res.data) {
-            setActiveMessages(res.data);
-        }
-    };
+
 
     const getOtherUserId = (convId: string) => {
         if (!user) return '';
