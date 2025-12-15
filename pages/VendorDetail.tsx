@@ -53,7 +53,7 @@ const VendorDetail: React.FC = () => {
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [showListModal, setShowListModal] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [menuItems, setMenuItems] = useState<MenuItem[] | null>(null);
 
     // Initial image index reset when modal opens
     useEffect(() => {
@@ -62,12 +62,16 @@ const VendorDetail: React.FC = () => {
 
     // Fetch menu items for list view
     useEffect(() => {
-        if (showListModal && id && menuItems.length === 0) {
+        if (showListModal && id && menuItems === null) {
             api.vendors.getMenuItems(id).then(res => {
-                if (res.success && res.data) setMenuItems(res.data);
+                if (res.success && res.data) {
+                    setMenuItems(res.data);
+                } else {
+                    setMenuItems([]);
+                }
             });
         }
-    }, [showListModal, id, menuItems.length]);
+    }, [showListModal, id, menuItems]);
 
     useEffect(() => {
         if (!id) return;
@@ -389,8 +393,10 @@ const VendorDetail: React.FC = () => {
                             </button>
                         </div>
                         <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
-                            {menuItems.length === 0 ? (
+                            {menuItems === null ? (
                                 <p className="text-center text-gray-500 py-8">Loading menu items...</p>
+                            ) : menuItems.length === 0 ? (
+                                <p className="text-center text-gray-500 py-8">No menu listed</p>
                             ) : (
                                 <div className="space-y-4">
                                     {/* Group items by category */}

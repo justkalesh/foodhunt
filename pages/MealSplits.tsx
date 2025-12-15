@@ -92,7 +92,45 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Dish Name Searchable Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop Name</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3.5 text-gray-500" size={18} />
+                <input
+                  type="text"
+                  value={vendorSearch}
+                  onChange={(e) => {
+                    setVendorSearch(e.target.value);
+                    setShowDropdown(true);
+                    setSelectedVendor(null); // Reset selection on type
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="Search vendor..."
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border ${selectedVendor ? 'border-primary-500 ring-1 ring-primary-500' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all`}
+                  required
+                />
+              </div>
+
+              {showDropdown && vendorSearch && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+                  {filteredVendors.length > 0 ? (
+                    filteredVendors.map(vendor => (
+                      <div
+                        key={vendor.id}
+                        onClick={() => handleSelectVendor(vendor)}
+                        className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-white flex justify-between items-center"
+                      >
+                        <span className="font-medium">{vendor.name}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{vendor.location}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">No vendors found</div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Dish Name Searchable Dropdown */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dish Name</label>
@@ -140,45 +178,6 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
                   </div>
                 )}
               </div>
-            </div>
-
-            <div className="relative" ref={dropdownRef}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop Name</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3.5 text-gray-500" size={18} />
-                <input
-                  type="text"
-                  value={vendorSearch}
-                  onChange={(e) => {
-                    setVendorSearch(e.target.value);
-                    setShowDropdown(true);
-                    setSelectedVendor(null); // Reset selection on type
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  placeholder="Search vendor..."
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border ${selectedVendor ? 'border-primary-500 ring-1 ring-primary-500' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all`}
-                  required
-                />
-              </div>
-
-              {showDropdown && vendorSearch && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
-                  {filteredVendors.length > 0 ? (
-                    filteredVendors.map(vendor => (
-                      <div
-                        key={vendor.id}
-                        onClick={() => handleSelectVendor(vendor)}
-                        className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-white flex justify-between items-center"
-                      >
-                        <span className="font-medium">{vendor.name}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{vendor.location}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">No vendors found</div>
-                  )}
-                </div>
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
