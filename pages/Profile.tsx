@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/mockDatabase';
-import { User, Review, MealSplit } from '../types';
+import { User, Review, MealSplit, UserRole } from '../types';
 import { User as UserIcon, Settings, Star, Utensils, Award, Edit3, Save, Sun, Moon, Monitor, CheckCircle, MessageCircle } from 'lucide-react';
 
 const Profile: React.FC = () => {
@@ -72,6 +72,12 @@ const Profile: React.FC = () => {
       loadProfile();
    }, [user, navigate, userId, isOwnProfile]);
 
+   const [imgError, setImgError] = useState(false);
+
+   useEffect(() => {
+      setImgError(false);
+   }, [formData.pfp_url]);
+
    const handleSave = async () => {
       if (!displayUser) return;
       setSaving(true);
@@ -103,9 +109,14 @@ const Profile: React.FC = () => {
          <div className="bg-gradient-to-br from-white to-orange-50/50 dark:bg-none dark:bg-dark-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8 mb-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
                <div className="relative group">
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-gray-700 shadow-inner bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-400 font-bold text-5xl dark:text-gray-600">
-                     {formData.pfp_url ? (
-                        <img src={formData.pfp_url} alt="Profile" className="w-full h-full object-cover" />
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-gray-700 shadow-inner bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 font-bold text-5xl dark:text-primary-300">
+                     {formData.pfp_url && !imgError ? (
+                        <img
+                           src={formData.pfp_url}
+                           alt="Profile"
+                           className="w-full h-full object-cover"
+                           onError={() => setImgError(true)}
+                        />
                      ) : (
                         <span>{(formData.name || '?')[0]?.toUpperCase()}</span>
                      )}
@@ -130,7 +141,9 @@ const Profile: React.FC = () => {
                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{displayUser.name}</h1>
                         )}
 
-                        <div className="text-gray-500 dark:text-gray-400 font-mono text-sm mt-1">{displayUser.email}</div>
+                        {(isOwnProfile || user?.role === UserRole.ADMIN) && (
+                           <div className="text-gray-500 dark:text-gray-400 font-mono text-sm mt-1">{displayUser.email}</div>
+                        )}
                      </div>
 
                      <div className="flex flex-col items-center md:items-end gap-2">
