@@ -118,6 +118,56 @@ export default defineConfig(({ mode }) => {
               res.end(JSON.stringify({ error: 'Internal Server Error' + error.message }));
             }
           });
+
+          // Middleware for /api/scan-menu
+          server.middlewares.use('/api/scan-menu', async (req, res, next) => {
+            try {
+              // Lazy load the handler to ensure env is ready
+              const handler = (await import('./api/scan-menu.js')).default;
+
+              // Simple body parser
+              const buffers = [];
+              for await (const chunk of req) {
+                buffers.push(chunk);
+              }
+              const data = Buffer.concat(buffers).toString();
+
+              if (data) {
+                try {
+                  // @ts-ignore
+                  req.body = JSON.parse(data);
+                } catch (e) {
+                  console.error('Failed to parse JSON body', e);
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                  return;
+                }
+              } else {
+                // @ts-ignore
+                req.body = {};
+              }
+
+              // Shim Vercel/Express methods
+              // @ts-ignore
+              res.status = (code) => {
+                res.statusCode = code;
+                return res;
+              };
+              // @ts-ignore
+              res.json = (data) => {
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(data));
+                return res;
+              };
+
+              // @ts-ignore
+              await handler(req, res);
+            } catch (error) {
+              console.error('Middleware Error:', error);
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: 'Internal Server Error: ' + error.message }));
+            }
+          });
         }
       }
     ],

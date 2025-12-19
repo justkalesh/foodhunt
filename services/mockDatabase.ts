@@ -257,11 +257,22 @@ export const api = {
       }
     },
 
-    addMenuItem: async (vendorId: string, name: string, price: number, category?: string): Promise<GenericResponse<MenuItem>> => {
+    addMenuItem: async (
+      vendorId: string,
+      name: string,
+      price: number,
+      category?: string,
+      sizePrices?: { small_price?: number; medium_price?: number; large_price?: number }
+    ): Promise<GenericResponse<MenuItem>> => {
       try {
+        const insertData: any = { vendor_id: vendorId, name, price, category, is_active: true };
+        if (sizePrices?.small_price !== undefined) insertData.small_price = sizePrices.small_price;
+        if (sizePrices?.medium_price !== undefined) insertData.medium_price = sizePrices.medium_price;
+        if (sizePrices?.large_price !== undefined) insertData.large_price = sizePrices.large_price;
+
         const { data, error } = await supabase
           .from('menu_items')
-          .insert({ vendor_id: vendorId, name, price, category, is_active: true })
+          .insert(insertData)
           .select()
           .single();
         if (error) throw error;

@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
 import { UserRole, Vendor, MenuItem } from '../types';
-import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle, Utensils, Star } from 'lucide-react';
+import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle, Utensils, Star, Camera, Loader2 } from 'lucide-react';
 
 const AdminVendors: React.FC = () => {
   const { user } = useAuth();
@@ -28,6 +28,16 @@ const AdminVendors: React.FC = () => {
   const [newMenuItemPrice, setNewMenuItemPrice] = useState('');
   const [newMenuItemCategory, setNewMenuItemCategory] = useState('');
   const [addingMenuItem, setAddingMenuItem] = useState(false);
+
+  // Size variant mode for add menu item
+  const [hasSizeVariants, setHasSizeVariants] = useState(false);
+  const [smallPrice, setSmallPrice] = useState('');
+  const [mediumPrice, setMediumPrice] = useState('');
+  const [largePrice, setLargePrice] = useState('');
+
+  // Menu Scanning State
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user && user.role !== UserRole.ADMIN) {
@@ -57,14 +67,29 @@ const AdminVendors: React.FC = () => {
 
   const handleAddMenuItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVendorForMenu || !newMenuItemName || !newMenuItemPrice) return;
+    if (!selectedVendorForMenu || !newMenuItemName) return;
+
+    // Validate: either regular price OR at least one size price is required
+    if (!hasSizeVariants && !newMenuItemPrice) {
+      alert('Please enter a price');
+      return;
+    }
+    if (hasSizeVariants && !smallPrice && !mediumPrice && !largePrice) {
+      alert('Please enter at least one size price');
+      return;
+    }
 
     setAddingMenuItem(true);
     const res = await api.vendors.addMenuItem(
       selectedVendorForMenu.id,
       newMenuItemName,
-      parseFloat(newMenuItemPrice),
-      newMenuItemCategory || undefined
+      hasSizeVariants ? 0 : parseFloat(newMenuItemPrice),
+      newMenuItemCategory || undefined,
+      hasSizeVariants ? {
+        small_price: smallPrice ? parseFloat(smallPrice) : undefined,
+        medium_price: mediumPrice ? parseFloat(mediumPrice) : undefined,
+        large_price: largePrice ? parseFloat(largePrice) : undefined,
+      } : undefined
     );
 
     if (res.success && res.data) {
@@ -72,16 +97,106 @@ const AdminVendors: React.FC = () => {
       setNewMenuItemName('');
       setNewMenuItemPrice('');
       setNewMenuItemCategory('');
+      setSmallPrice('');
+      setMediumPrice('');
+      setLargePrice('');
+      setHasSizeVariants(false);
     } else {
       alert(res.message);
     }
     setAddingMenuItem(false);
   };
 
+  // Handle scanning menu from image
+  const handleScanMenu = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedVendorForMenu) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    setIsScanning(true);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64String = (reader.result as string).split(',')[1];
+
+        try {
+          const response = await fetch('/api/scan-menu', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: base64String,
+              mimeType: file.type
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.items) {
+            // Add scanned items to the database and update local state
+            const addedItems: MenuItem[] = [];
+            for (const item of data.items) {
+              // Check if this item has size variants
+              const hasSmall = item.small_price != null;
+              const hasMedium = item.medium_price != null;
+              const hasLarge = item.large_price != null;
+              const hasSizes = hasSmall || hasMedium || hasLarge;
+
+              const res = await api.vendors.addMenuItem(
+                selectedVendorForMenu.id,
+                item.name,
+                hasSizes ? 0 : (item.price || 0), // Use 0 as base price if sizes exist
+                item.category,
+                // Only pass size prices if at least one exists
+                hasSizes ? {
+                  small_price: hasSmall ? item.small_price : undefined,
+                  medium_price: hasMedium ? item.medium_price : undefined,
+                  large_price: hasLarge ? item.large_price : undefined
+                } : undefined
+              );
+              if (res.success && res.data) {
+                addedItems.push(res.data);
+              }
+            }
+            setMenuItems(prev => [...prev, ...addedItems]);
+            alert(`Successfully added ${addedItems.length} menu items!`);
+          } else {
+            console.error('API Response:', data);
+            alert(`Error: ${data.error}\nDetails: ${data.details || 'No details available'}`);
+          }
+        } catch (error) {
+          console.error('Scan API error:', error);
+          alert(`Failed to process the image.\nError: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+
+        setIsScanning(false);
+      };
+
+      reader.onerror = () => {
+        alert('Failed to read the image file.');
+        setIsScanning(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File processing error:', error);
+      alert('Failed to process the image.');
+      setIsScanning(false);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleDeleteMenuItem = async (itemId: string) => {
-    if (!window.confirm("Delete this menu item?")) return;
     const res = await api.vendors.deleteMenuItem(itemId);
     if (res.success) {
       setMenuItems(menuItems.filter(item => item.id !== itemId));
@@ -404,7 +519,35 @@ const AdminVendors: React.FC = () => {
                   <h2 className="text-xl font-bold dark:text-white">Manage Menu</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">for {selectedVendorForMenu.name}</p>
                 </div>
-                <button onClick={() => setIsMenuModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400"><X size={24} /></button>
+                <div className="flex items-center gap-3">
+                  {/* Scan Menu Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isScanning}
+                    className="bg-secondary-600 hover:bg-secondary-700 disabled:bg-secondary-400 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                  >
+                    {isScanning ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Scanning...
+                      </>
+                    ) : (
+                      <>
+                        <Camera size={18} />
+                        Scan Menu Image
+                      </>
+                    )}
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleScanMenu}
+                    className="hidden"
+                  />
+                  <button onClick={() => setIsMenuModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400"><X size={24} /></button>
+                </div>
               </div>
 
               <div className="p-6 overflow-y-auto flex-1 custom-scrollbar dark:bg-dark-900">
@@ -431,17 +574,74 @@ const AdminVendors: React.FC = () => {
                       className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
                     />
                   </div>
-                  <div className="w-32">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Price (₹)</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="99"
-                      value={newMenuItemPrice}
-                      onChange={(e) => setNewMenuItemPrice(e.target.value)}
-                      className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
-                    />
-                  </div>
+
+                  {/* Price Section with S/M/L Toggle */}
+                  {!hasSizeVariants ? (
+                    <div className="w-32">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-gray-500 uppercase">Price (₹)</label>
+                        <button
+                          type="button"
+                          onClick={() => setHasSizeVariants(true)}
+                          className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold"
+                          title="Enable S/M/L sizes"
+                        >
+                          S/M/L
+                        </button>
+                      </div>
+                      <input
+                        type="number"
+                        placeholder="99"
+                        value={newMenuItemPrice}
+                        onChange={(e) => setNewMenuItemPrice(e.target.value)}
+                        className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="w-20">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-gray-500 uppercase">Small</label>
+                          <button
+                            type="button"
+                            onClick={() => { setHasSizeVariants(false); setSmallPrice(''); setMediumPrice(''); setLargePrice(''); }}
+                            className="text-xs text-red-500 hover:text-red-700"
+                            title="Switch to single price"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <input
+                          type="number"
+                          placeholder="S"
+                          value={smallPrice}
+                          onChange={(e) => setSmallPrice(e.target.value)}
+                          className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                        />
+                      </div>
+                      <div className="w-20">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Medium</label>
+                        <input
+                          type="number"
+                          placeholder="M"
+                          value={mediumPrice}
+                          onChange={(e) => setMediumPrice(e.target.value)}
+                          className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                        />
+                      </div>
+                      <div className="w-20">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Large</label>
+                        <input
+                          type="number"
+                          placeholder="L"
+                          value={largePrice}
+                          onChange={(e) => setLargePrice(e.target.value)}
+                          className="w-full p-2 rounded border dark:border-gray-600 dark:bg-dark-900 dark:text-white text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-end">
                     <button
                       type="submit"
@@ -479,7 +679,18 @@ const AdminVendors: React.FC = () => {
                             >
                               <Star size={18} className={item.is_recommended ? "fill-yellow-400" : ""} />
                             </button>
-                            <span className="font-bold text-green-600">₹{item.price}</span>
+                            {/* Price display - show S/M/L if size prices exist */}
+                            {(item.small_price != null || item.medium_price != null || item.large_price != null) ? (
+                              <span className="font-bold text-green-600 text-sm">
+                                {item.small_price != null && `S:₹${item.small_price}`}
+                                {item.small_price != null && (item.medium_price != null || item.large_price != null) && ' | '}
+                                {item.medium_price != null && `M:₹${item.medium_price}`}
+                                {item.medium_price != null && item.large_price != null && ' | '}
+                                {item.large_price != null && `L:₹${item.large_price}`}
+                              </span>
+                            ) : (
+                              <span className="font-bold text-green-600">₹{item.price}</span>
+                            )}
                             <button
                               onClick={() => handleDeleteMenuItem(item.id)}
                               className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"

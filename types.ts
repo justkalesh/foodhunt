@@ -70,6 +70,10 @@ export interface MenuItem {
   category?: string;
   is_active: boolean;
   is_recommended?: boolean;
+  // Size variants (optional - only show if defined)
+  small_price?: number;
+  medium_price?: number;
+  large_price?: number;
 }
 
 // Keep existing types for MealSplit to maintain feature compatibility

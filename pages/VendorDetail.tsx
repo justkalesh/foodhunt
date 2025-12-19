@@ -8,6 +8,29 @@ import { MapPin, Clock, DollarSign, Star, ChevronLeft, Send, Flame, BarChart, Tr
 
 const CategorySection = ({ title, items }: { title: string, items: MenuItem[] }) => {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Helper to render price display
+    const renderPrice = (item: MenuItem) => {
+        // Check for actual valid size prices (not null and not undefined)
+        const hasSmall = item.small_price != null;
+        const hasMedium = item.medium_price != null;
+        const hasLarge = item.large_price != null;
+        const hasSizes = hasSmall || hasMedium || hasLarge;
+
+        if (hasSizes) {
+            const sizes = [];
+            if (hasSmall) sizes.push(`S: ₹${item.small_price}`);
+            if (hasMedium) sizes.push(`M: ₹${item.medium_price}`);
+            if (hasLarge) sizes.push(`L: ₹${item.large_price}`);
+            return (
+                <div className="text-right">
+                    <span className="font-bold text-green-600 text-sm">{sizes.join(' | ')}</span>
+                </div>
+            );
+        }
+        return <span className="font-bold text-green-600">₹{item.price}</span>;
+    };
+
     return (
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <button
@@ -28,7 +51,7 @@ const CategorySection = ({ title, items }: { title: string, items: MenuItem[] })
                                     {item.is_recommended && <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-200"><Star size={10} className="fill-current" /> Recommended</span>}
                                 </h3>
                             </div>
-                            <span className="font-bold text-green-600">₹{item.price}</span>
+                            {renderPrice(item)}
                         </div>
                     ))}
                 </div>

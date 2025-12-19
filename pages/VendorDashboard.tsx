@@ -9,10 +9,10 @@ const VendorDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [items, setItems] = useState<MenuItem[]>([]);
-    
+
     // In a real app, we would look up the vendor associated with this user
     // For this mock, we assume user 'vendor01' owns 'v1'
-    const vendorId = 'v1'; 
+    const vendorId = 'v1';
 
     useEffect(() => {
         if (!user || user.role !== UserRole.VENDOR) {
