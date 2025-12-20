@@ -418,8 +418,8 @@ const AdminVendors: React.FC = () => {
                   key={tab.id}
                   to={tab.path}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${tab.id === 'vendors'
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
                     }`}
                 >
                   <tab.icon size={18} />
@@ -476,8 +476,8 @@ const AdminVendors: React.FC = () => {
                       <button
                         onClick={() => handleToggleStatus(vendor)}
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full transition-colors cursor-pointer ${vendor.is_active
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                           }`}
                       >
                         {vendor.is_active ? 'Active' : 'Inactive'}

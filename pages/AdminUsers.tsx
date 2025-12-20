@@ -242,8 +242,8 @@ const AdminUsers: React.FC = () => {
                   key={tab.id}
                   to={tab.path}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${tab.id === 'users'
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
                     }`}
                 >
                   <tab.icon size={18} />
@@ -286,8 +286,8 @@ const AdminUsers: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${u.role === UserRole.ADMIN
-                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                          : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300'
+                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                        : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300'
                         }`}>
                         {u.role.toUpperCase()}
                       </span>
@@ -312,8 +312,8 @@ const AdminUsers: React.FC = () => {
                         <button
                           onClick={() => handleToggleStatus(u.id)}
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${u.is_disabled
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200'
                             }`}
                         >
                           {u.is_disabled ? <><Unlock size={14} /> Enable</> : <><Lock size={14} /> Disable</>}
