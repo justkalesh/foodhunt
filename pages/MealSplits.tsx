@@ -205,7 +205,7 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
                   }}
                   onFocus={() => setShowDropdown(true)}
                   placeholder="Search vendor..."
-                  className={`w - full pl - 10 pr - 4 py - 3 rounded - xl bg - white / 50 dark: bg - slate - 800 / 50 border ${selectedVendor ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-600'} text - gray - 900 dark: text - white placeholder - gray - 400 focus: ring - 2 focus: ring - primary - 500 focus: border - transparent outline - none transition - all`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-slate-700 border ${selectedVendor ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-600'} text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all`}
                   required
                 />
               </div>
@@ -555,6 +555,7 @@ const MealSplits: React.FC = () => {
   const [filterVendor, setFilterVendor] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [sortBy, setSortBy] = useState<'time' | 'price' | 'slots'>('time');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -745,14 +746,25 @@ const MealSplits: React.FC = () => {
 
   if (loading) return <PageLoading message="Loading meal splits..." />;
 
+  const clearFilters = () => {
+    setFilterVendor('');
+    setFilterDate('');
+    setSortBy('time');
+  };
+
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="hero-pattern relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 pt-12 pb-16 relative z-10">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden border-b border-gray-100 dark:border-gray-800">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-accent-sky/10 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 pt-12 pb-8 relative z-10">
           {/* Notification Banner */}
           {permissionStatus !== 'granted' && (
-            <div className="mb-8 glass dark:glass-dark rounded-2xl p-4 flex items-center justify-between animate-slide-up shadow-lg">
+            <div className="mb-6 glass dark:glass-dark rounded-2xl p-4 flex items-center justify-between shadow-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-accent-sky/20 flex items-center justify-center text-accent-sky">
                   <Sparkles size={20} />
@@ -767,98 +779,65 @@ const MealSplits: React.FC = () => {
             </div>
           )}
 
-          {/* Hero Content */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
-            <div className="space-y-4 max-w-2xl animate-slide-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium">
-                <Ticket size={14} />
-                Split & Save Together
-              </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
-                Meal <span className="text-primary-600">Splits</span>
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                Join forces with fellow foodies. Split the cost, share the joy, and enjoy premium meals for a fraction of the price.
-              </p>
-            </div>
-
-            <div className="flex gap-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <button
-                onClick={handleShare}
-                className="w-12 h-12 rounded-2xl glass dark:glass-dark flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-all hover:scale-105 shadow-lg"
-                title="Share page"
-              >
-                <Share2 size={20} />
-              </button>
-              <Button
-                size="lg"
-                onClick={() => {
-                  if (!user) navigate('/login');
-                  else setIsModalOpen(true);
-                }}
-                leftIcon={<PlusCircle size={22} />}
-                className="shadow-glow-primary"
-              >
-                Start a Split
-              </Button>
-            </div>
-          </div>
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium mb-4">
+            <Sparkles size={14} />
+            Split & Save Together
+          </span>
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">
+            Meal <span className="text-primary-600">Splits</span>
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl">
+            Join forces with fellow foodies. Split the cost, share the joy, and enjoy premium meals.
+          </p>
         </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute top-1/2 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-accent-sky/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 -mt-4 relative z-20 pb-16">
-        {/* Filter Bar */}
-        <div className="filter-bar glass dark:glass-dark rounded-2xl p-4 mb-8 shadow-lg">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Search & Filter Bar */}
+        <div className="glass dark:glass-dark rounded-2xl p-4 mb-8 shadow-lg">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
               <Filter size={18} />
-              <span className="text-sm font-medium">Filters</span>
+              <span className="text-sm font-medium">Search</span>
             </div>
 
-            <div className="flex-1 flex flex-wrap items-center gap-3">
-              {/* Vendor Filter */}
-              <div className="relative min-w-[160px]">
-                <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Vendor..."
+                  placeholder="Search by vendor name..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-500 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                   value={filterVendor}
-                  onChange={(e) => setFilterVendor(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                  onChange={e => setFilterVendor(e.target.value)}
                 />
               </div>
-
-              {/* Date Filter */}
-              <div className="relative min-w-[140px]">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input
-                  type="date"
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-500 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                />
-              </div>
-
-              {/* Sort By */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'time' | 'price' | 'slots')}
-                className="px-4 py-2 text-sm rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-500 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all appearance-none cursor-pointer"
-              >
-                <option value="time">Sort: Time</option>
-                <option value="price">Sort: Price</option>
-                <option value="slots">Sort: Spots Left</option>
-              </select>
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFilterOpen(true)}
+              leftIcon={<Filter size={16} />}
+              className="!bg-white dark:!bg-slate-700 border border-gray-200 dark:border-gray-500"
+            >
+              Filters
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!user) navigate('/login');
+                else setIsModalOpen(true);
+              }}
+              leftIcon={<PlusCircle size={18} />}
+            >
+              Start a Split
+            </Button>
 
             {(filterVendor || filterDate) && (
               <button
-                onClick={() => { setFilterVendor(''); setFilterDate(''); }}
+                onClick={clearFilters}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium"
               >
                 Clear All
@@ -958,6 +937,68 @@ const MealSplits: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Filter Modal */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="glass dark:glass-dark rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm z-10 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Filters</h3>
+              <button onClick={() => setIsFilterOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-6">
+              {/* Date Filter */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Date</h4>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 text-sm rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Sort By</h4>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Time (Soonest First)', value: 'time' },
+                    { label: 'Price (Lowest First)', value: 'price' },
+                    { label: 'Spots Available', value: 'slots' },
+                  ].map((option) => (
+                    <label key={option.value} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                      <input
+                        type="radio"
+                        name="sort"
+                        className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                        checked={sortBy === option.value}
+                        onChange={() => setSortBy(option.value as 'time' | 'price' | 'slots')}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm z-10 flex gap-3 rounded-b-2xl">
+              <Button variant="ghost" className="flex-1" onClick={() => { clearFilters(); setIsFilterOpen(false); }}>
+                Clear All
+              </Button>
+              <Button className="flex-1" onClick={() => setIsFilterOpen(false)}>
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Split Modal */}
       {isModalOpen && (

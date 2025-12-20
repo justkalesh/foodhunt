@@ -57,13 +57,10 @@ const AdminDashboard: React.FC = () => {
     if (loading) return <PageLoading message="Initializing Command Centre..." />;
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 relative overflow-hidden">
-            {/* Background Gradient Blobs */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-                <div className="absolute top-1/3 left-0 w-80 h-80 bg-accent-sky/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
-            </div>
+        <div className="relative min-h-screen bg-gray-50 dark:bg-dark-900 overflow-hidden transition-colors duration-300">
+            {/* Glass Blob Background */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -ml-24 -mb-24 pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-4 py-8 relative z-10">
 
@@ -153,15 +150,13 @@ const AdminDashboard: React.FC = () => {
 
                     {/* MOUNTING SUB-PAGES DIRECTLY */}
                     {activeTab === 'vendors' && (
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                            {/* You would import AdminVendors content here or just use the component */}
-                            {/* Ensure AdminVendors is exported as default */}
+                        <div className="bg-gradient-to-br from-white to-orange-50/50 dark:bg-none dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                             <AdminVendors />
                         </div>
                     )}
 
                     {activeTab === 'users' && (
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="bg-gradient-to-br from-white to-orange-50/50 dark:bg-none dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                             <AdminUsers />
                         </div>
                     )}
@@ -180,9 +175,9 @@ const StatsCard = ({ label, value, icon: Icon, color }: any) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex items-center justify-between group hover:shadow-md transition-all">
+        <div className="bg-gradient-to-br from-white to-orange-50/50 dark:bg-none dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between group hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{label}</div>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white group-hover:scale-105 transition-transform origin-left">{value}</div>
             </div>
             <div className={`p-4 rounded-xl ${colorClasses[color]}`}>
