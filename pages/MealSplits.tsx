@@ -141,7 +141,7 @@ const CreateSplitModal: React.FC<CreateSplitModalProps> = ({ isOpen, onClose, on
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (dish && selectedVendor && price && people && date && time) {
-      const dateTime = new Date(`${date}T${time} `);
+      const dateTime = new Date(`${date}T${time}`);
 
       if (dateTime <= new Date()) {
         alert("Please select a future date and time for the split.");

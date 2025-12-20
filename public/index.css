@@ -5,6 +5,11 @@
    GLOBAL THEME TRANSITION
    ============================================ */
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* Only apply transitions to theme-related properties, not to transform/opacity */
 *,
 *::before,
 *::after {
