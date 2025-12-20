@@ -4,7 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
 import { User, UserRole } from '../types';
-import { ChevronLeft, Lock, Unlock, Plus, MessageSquare, X, Bell } from 'lucide-react';
+import { ChevronLeft, Lock, Unlock, Plus, MessageSquare, X, Bell, Shield, Store, Users, LayoutDashboard, Sparkles } from 'lucide-react';
+import { PageLoading } from '../components/ui/LoadingSpinner';
 
 const AdminUsers: React.FC = () => {
   const { user } = useAuth();
@@ -167,97 +168,141 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-10 text-center dark:text-white">Loading Users...</div>;
+  if (loading) return <PageLoading message="Loading users..." />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <Link to="/admin" className="text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 mb-4 text-sm font-medium">
-            <ChevronLeft size={16} /> Back to Dashboard
-          </Link>
+    <div className="min-h-screen">
+      {/* Hero Header with Tab Navigation */}
+      <div className="relative overflow-hidden border-b border-gray-100 dark:border-slate-800">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-accent-sky/10 rounded-full blur-3xl" />
+        </div>
 
-          <div className="flex justify-between items-center sm:flex-row flex-col sm:gap-0 gap-4">
+        <div className="max-w-7xl mx-auto px-4 pt-12 pb-8 relative z-10">
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold dark:text-white">Manage Users</h1>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="p-1 border rounded text-sm dark:bg-dark-800 dark:text-white dark:border-gray-700"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Date Joined (Oldest)</option>
-                  <option value="points_high">Most Points</option>
-                </select>
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-white shadow-lg">
+                <Users size={32} />
+              </div>
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium mb-2">
+                  <Sparkles size={14} />
+                  Admin Access
+                </span>
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                  Manage <span className="text-primary-600">Users</span>
+                </h1>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="points_high">Most Points</option>
+                </select>
+              </div>
               <button
                 onClick={() => setIsRewardModalOpen(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"
+                className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-lg transition-all hover:-translate-y-0.5"
               >
-                <div className="w-5 h-5 flex items-center justify-center font-bold">$</div> Reward
+                <span className="text-lg">$</span> Reward
               </button>
               <button
                 onClick={() => openPushModal({ id: 'ALL', name: 'ALL USERS', email: '', role: UserRole.STUDENT, semester: '', loyalty_points: 0, is_disabled: false, created_at: '' })}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-lg transition-all hover:-translate-y-0.5"
               >
-                <Bell size={20} /> Broadcast
+                <Bell size={18} /> Broadcast
               </button>
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-lg hover:shadow-primary-500/30 transition-all hover:-translate-y-0.5"
               >
-                <Plus size={20} /> Add User
+                <Plus size={18} /> Add User
               </button>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white dark:bg-dark-800 shadow-md rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+          {/* Pill-shaped Tab Switcher */}
+          <div className="flex justify-center">
+            <div className="inline-flex p-1.5 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+              {[
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+                { id: 'vendors', label: 'Vendors', icon: Store, path: '/admin/vendors' },
+                { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
+              ].map((tab) => (
+                <Link
+                  key={tab.id}
+                  to={tab.path}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${tab.id === 'users'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
+                    }`}
+                >
+                  <tab.icon size={18} />
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Table Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-gray-100 dark:divide-slate-800">
+              <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Info</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Semester</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Loyalty</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User Info</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Semester</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Loyalty</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
                 {sortedUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link to={`/profile/${u.id}`} className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                          {u.pfp_url ? <img src={u.pfp_url} alt={u.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-gray-500">{u.name[0]}</div>}
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-slate-700">
+                          {u.pfp_url ? <img src={u.pfp_url} alt={u.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-gray-500 dark:text-gray-400 text-lg">{u.name[0]}</div>}
                         </div>
                         <div>
                           <div className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">{u.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Email: {u.email}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{u.email}</div>
                         </div>
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === UserRole.ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${u.role === UserRole.ADMIN
+                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                          : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300'
+                        }`}>
                         {u.role.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {u.semester}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 font-mono">
-                      {u.loyalty_points || 0} pts
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-bold text-primary-600">{u.loyalty_points || 0}</span>
+                      <span className="text-xs text-gray-400 ml-1">pts</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
                       <button
                         onClick={() => handleEditUser(u)}
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         title="Edit User"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
@@ -266,7 +311,10 @@ const AdminUsers: React.FC = () => {
                       {u.role !== UserRole.ADMIN && (
                         <button
                           onClick={() => handleToggleStatus(u.id)}
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-colors ${u.is_disabled ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${u.is_disabled
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200'
+                            }`}
                         >
                           {u.is_disabled ? <><Unlock size={14} /> Enable</> : <><Lock size={14} /> Disable</>}
                         </button>
@@ -274,13 +322,13 @@ const AdminUsers: React.FC = () => {
 
                       <button
                         onClick={() => handleMessageUser(u)}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 hover:bg-sky-200 transition-colors"
                       >
                         <MessageSquare size={14} /> Msg
                       </button>
                       <button
                         onClick={() => openPushModal(u)}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 hover:bg-orange-200 transition-colors"
                       >
                         <Bell size={14} /> Push
                       </button>

@@ -440,216 +440,227 @@ const Inbox: React.FC = () => {
     }
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
-            {/* Sidebar */}
-            <div className={`${activeChatId ? 'hidden md:flex' : 'flex'} w-full md:w-[400px] flex-col border-r border-gray-200 dark:border-gray-800 bg-gradient-to-b from-white to-orange-50/30 dark:bg-none dark:bg-gray-900`}>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="h-[80vh] bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-2xl overflow-hidden flex">
+                {/* Sidebar */}
+                <div className={`${activeChatId ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 flex-col border-r border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900`}>
 
-                {permissionStatus !== 'granted' && (
-                    <div className="bg-primary-600 text-white p-3 text-xs flex justify-between items-center">
-                        <span>Turn on notifications to get notified about new messages.</span>
-                        <button onClick={requestPermission} className="bg-white text-primary-600 px-3 py-1 rounded-full font-bold hover:bg-gray-100">Enable</button>
+                    {permissionStatus !== 'granted' && (
+                        <div className="bg-primary-600 text-white p-3 text-xs flex justify-between items-center">
+                            <span>Turn on notifications to get notified about new messages.</span>
+                            <button onClick={requestPermission} className="bg-white text-primary-600 px-3 py-1 rounded-full font-bold hover:bg-gray-100">Enable</button>
+                        </div>
+                    )}
+
+                    {/* Header */}
+                    <div className="p-4 flex justify-between items-center border-b border-gray-100 dark:border-slate-800 h-[72px] bg-white dark:bg-slate-900">
+                        {isSelectionMode ? (
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setIsSelectionMode(false)}><X size={20} /></button>
+                                    <span className="font-bold">{selectedChats.size} Selected</span>
+                                </div>
+                                {selectedChats.size > 0 && (
+                                    <button onClick={() => setConfirmModal({
+                                        isOpen: true,
+                                        title: 'Delete Conversations',
+                                        message: `Delete ${selectedChats.size} conversation(s)?`,
+                                        action: performDeleteSelected,
+                                        isDestructive: true
+                                    })} className="text-red-500"><Trash2 size={20} /></button>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <h1 className="text-xl font-extrabold text-gray-900 dark:text-white">Foodies</h1>
+                                <div className="relative" ref={sidebarMenuRef}>
+                                    <button onClick={() => setShowSidebarMenu(!showSidebarMenu)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
+                                        <MoreVertical size={20} />
+                                    </button>
+                                    {showSidebarMenu && (
+                                        <div className="absolute right-0 top-10 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border z-50 py-1">
+                                            <button onClick={toggleSelectionMode} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Select Chat</button>
+                                            <button onClick={() => setConfirmModal({
+                                                isOpen: true,
+                                                title: 'Clear Inbox',
+                                                message: "Delete ALL conversations?",
+                                                action: performClearInbox,
+                                                isDestructive: true
+                                            })} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">Clear Inbox</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Search */}
+                    <div className="p-3">
+                        <div className="relative">
+                            <input
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
+                                placeholder="Search user..."
+                                className="w-full bg-gray-100 dark:bg-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                                disabled={isSelectionMode}
+                            />
+                            <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
+                        </div>
+                    </div>
+
+                    {/* List */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        {conversations.map(conv => {
+                            const info = getConversationInfo(conv);
+                            const isSelected = selectedChats.has(conv.id);
+                            const unread = conv.unread_counts?.[user?.id || ''] || 0;
+
+                            return (
+                                <div
+                                    key={conv.id}
+                                    onClick={() => isSelectionMode ? toggleChatSelection(conv.id) : activeChatId !== conv.id && (setActiveChatId(conv.id), setActiveMessages([]))}
+                                    className={`flex items-center gap-3 p-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-slate-800 ${activeChatId === conv.id && !isSelectionMode
+                                            ? 'bg-primary-50 dark:bg-primary-900/10 border-l-4 border-l-primary-500'
+                                            : 'hover:bg-gray-50 dark:hover:bg-slate-800/50 border-l-4 border-l-transparent'
+                                        }`}
+                                >
+                                    {isSelectionMode && (
+                                        <div className="text-primary-600">{isSelected ? <CheckSquare size={20} /> : <Square size={20} />}</div>
+                                    )}
+                                    <div className="relative w-12 h-12 flex-shrink-0">
+                                        {info.avatar ? (
+                                            <img src={info.avatar} alt="" className="w-12 h-12 rounded-full object-cover" />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center font-bold text-primary-700 dark:text-primary-300">
+                                                {info.initial}
+                                            </div>
+                                        )}
+                                        {unread > 0 && activeChatId !== conv.id && (
+                                            <span className="absolute top-0 right-0 bg-primary-600 rounded-full w-3 h-3 border-2 border-white"></span>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-baseline">
+                                            <h3 className="font-medium truncate">{info.name}</h3>
+                                            <span className="text-xs text-gray-500">{conv.last_message ? new Date(conv.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 truncate">{conv.last_message?.content || 'No messages'}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {conversations.length === 0 && <div className="p-8 text-center text-gray-500">No chats yet.</div>}
+                    </div>
+                </div>
+
+                {/* Chat Area */}
+                {activeChatId ? (
+                    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-slate-950 relative">
+                        {/* Glassmorphism Header */}
+                        <div className="p-4 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 flex items-center justify-between border-b border-gray-100 dark:border-slate-800 z-20">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setActiveChatId(null)} className="md:hidden text-gray-500"><ArrowLeft size={24} /></button>
+                                <Link to={`/profile/${displayInfo?.id}`} className="flex items-center gap-3 hover:opacity-80">
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                                        {displayInfo?.avatar ? <img src={displayInfo.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold bg-primary-100 text-primary-600">{displayInfo?.initial}</div>}
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold">{displayInfo?.name}</h2>
+                                        <span className="text-xs text-gray-500">View Profile</span>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Messages */}
+                        <div
+                            className="flex-1 overflow-y-auto p-4 space-y-2 z-10 custom-scrollbar scroll-smooth"
+                            onScroll={handleScroll}
+                            ref={scrollContainerRef}
+                        >
+                            {activeMessages.map((msg, idx) => {
+                                const isMe = msg.sender_id === user?.id;
+                                const showDateSep = idx === 0 || new Date(msg.created_at).toDateString() !== new Date(activeMessages[idx - 1].created_at).toDateString();
+
+                                return (
+                                    <React.Fragment key={msg.id}>
+                                        {showDateSep && (
+                                            <div className="flex justify-center my-4">
+                                                <span className="bg-gray-200 dark:bg-gray-700 text-xs px-3 py-1 rounded-full">{new Date(msg.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        )}
+                                        <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-md text-sm ${isMe
+                                                    ? 'bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-tr-none'
+                                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-gray-100 rounded-tl-none'
+                                                }`}>
+                                                <div className="break-words">{renderMessageContent(msg.content, isMe)}</div>
+                                                {/* Request Buttons (Simplified) */}
+                                                {msg.request_id && !isMe && msg.request_status === 'pending' && (
+                                                    <div className="mt-2 pt-2 border-t flex gap-2">
+                                                        <button onClick={() => api.splits.respondToRequest(msg.request_id!, 'accepted').then(() => fetchChatMessages(activeChatId!))} className="bg-green-500 text-white px-3 py-1 rounded text-xs">Accept</button>
+                                                        <button onClick={() => api.splits.respondToRequest(msg.request_id!, 'rejected').then(() => fetchChatMessages(activeChatId!))} className="bg-gray-200 text-gray-800 px-3 py-1 rounded text-xs">Reject</button>
+                                                    </div>
+                                                )}
+                                                <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-primary-100' : 'text-gray-400'}`}>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                            </div>
+                                        </div>
+                                    </React.Fragment>
+                                );
+                            })}
+                            <div ref={messagesEndRef} />
+                            {showScrollBottom && (
+                                <button onClick={scrollToBottom} className="absolute bottom-20 right-6 bg-white p-2 rounded-full shadow-lg text-primary-600 animate-bounce"><ChevronDown size={24} /></button>
+                            )}
+                        </div>
+
+                        {/* Floating Input Bar */}
+                        <div className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center gap-3 z-10 border-t border-gray-100 dark:border-slate-800 relative">
+                            {/* Mention Popup */}
+                            {mentionQuery && filteredVendors.length > 0 && (
+                                <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
+                                    {filteredVendors.map(v => (
+                                        <button key={v.id} onClick={() => insertMention(v)} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-medium text-gray-900 dark:text-white transition-colors">{v.name}</button>
+                                    ))}
+                                </div>
+                            )}
+                            <form onSubmit={handleSendMessage} className="flex-1 flex items-center gap-3">
+                                <input
+                                    ref={inputRef}
+                                    value={inputText}
+                                    onChange={handleInputChange}
+                                    placeholder="Type a message..."
+                                    className="flex-1 bg-gray-100 dark:bg-slate-800 rounded-full px-6 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 border border-transparent focus:border-primary-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all"
+                                />
+                                <button type="submit" disabled={!inputText.trim()} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${inputText.trim()
+                                        ? 'bg-gradient-to-r from-primary-600 to-orange-500 text-white hover:shadow-primary-500/30 hover:scale-105'
+                                        : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500'
+                                    }`}>
+                                    <Send size={20} />
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 text-center p-10">
+                        <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg">
+                            <Send size={40} />
+                        </div>
+                        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">Food-Hunt <span className="text-primary-600">Messenger</span></h2>
+                        <p className="text-gray-500 dark:text-gray-400">Select a conversation to start chatting with foodies.</p>
                     </div>
                 )}
 
-                {/* Header */}
-                <div className="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 h-[72px]">
-                    {isSelectionMode ? (
-                        <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => setIsSelectionMode(false)}><X size={20} /></button>
-                                <span className="font-bold">{selectedChats.size} Selected</span>
-                            </div>
-                            {selectedChats.size > 0 && (
-                                <button onClick={() => setConfirmModal({
-                                    isOpen: true,
-                                    title: 'Delete Conversations',
-                                    message: `Delete ${selectedChats.size} conversation(s)?`,
-                                    action: performDeleteSelected,
-                                    isDestructive: true
-                                })} className="text-red-500"><Trash2 size={20} /></button>
-                            )}
-                        </div>
-                    ) : (
-                        <>
-                            <h1 className="text-xl font-bold">Foodies</h1>
-                            <div className="relative" ref={sidebarMenuRef}>
-                                <button onClick={() => setShowSidebarMenu(!showSidebarMenu)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
-                                    <MoreVertical size={20} />
-                                </button>
-                                {showSidebarMenu && (
-                                    <div className="absolute right-0 top-10 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border z-50 py-1">
-                                        <button onClick={toggleSelectionMode} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Select Chat</button>
-                                        <button onClick={() => setConfirmModal({
-                                            isOpen: true,
-                                            title: 'Clear Inbox',
-                                            message: "Delete ALL conversations?",
-                                            action: performClearInbox,
-                                            isDestructive: true
-                                        })} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">Clear Inbox</button>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {/* Search */}
-                <div className="p-3">
-                    <div className="relative">
-                        <input
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleSearchKeyDown}
-                            placeholder="Search user..."
-                            className="w-full bg-gray-100 dark:bg-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-                            disabled={isSelectionMode}
-                        />
-                        <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
-                    </div>
-                </div>
-
-                {/* List */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {conversations.map(conv => {
-                        const info = getConversationInfo(conv);
-                        const isSelected = selectedChats.has(conv.id);
-                        const unread = conv.unread_counts?.[user?.id || ''] || 0;
-
-                        return (
-                            <div
-                                key={conv.id}
-                                onClick={() => isSelectionMode ? toggleChatSelection(conv.id) : activeChatId !== conv.id && (setActiveChatId(conv.id), setActiveMessages([]))}
-                                className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 ${activeChatId === conv.id && !isSelectionMode ? 'bg-primary-50 dark:bg-gray-800' : ''}`}
-                            >
-                                {isSelectionMode && (
-                                    <div className="text-primary-600">{isSelected ? <CheckSquare size={20} /> : <Square size={20} />}</div>
-                                )}
-                                <div className="relative w-12 h-12 flex-shrink-0">
-                                    {info.avatar ? (
-                                        <img src={info.avatar} alt="" className="w-12 h-12 rounded-full object-cover" />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center font-bold text-primary-700 dark:text-primary-300">
-                                            {info.initial}
-                                        </div>
-                                    )}
-                                    {unread > 0 && activeChatId !== conv.id && (
-                                        <span className="absolute top-0 right-0 bg-primary-600 rounded-full w-3 h-3 border-2 border-white"></span>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline">
-                                        <h3 className="font-medium truncate">{info.name}</h3>
-                                        <span className="text-xs text-gray-500">{conv.last_message ? new Date(conv.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-500 truncate">{conv.last_message?.content || 'No messages'}</p>
-                                </div>
-                            </div>
-                        );
-                    })}
-                    {conversations.length === 0 && <div className="p-8 text-center text-gray-500">No chats yet.</div>}
-                </div>
+                <ConfirmationModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                    onConfirm={confirmModal.action}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    isDestructive={confirmModal.isDestructive}
+                />
             </div>
-
-            {/* Chat Area */}
-            {activeChatId ? (
-                <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-50 to-orange-50/20 dark:bg-none dark:bg-[#0b141a] relative">
-                    {/* Header */}
-                    <div className="p-3 bg-white dark:bg-gray-800 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 shadow-sm z-20">
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setActiveChatId(null)} className="md:hidden text-gray-500"><ArrowLeft size={24} /></button>
-                            <Link to={`/profile/${displayInfo?.id}`} className="flex items-center gap-3 hover:opacity-80">
-                                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                                    {displayInfo?.avatar ? <img src={displayInfo.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold bg-primary-100 text-primary-600">{displayInfo?.initial}</div>}
-                                </div>
-                                <div>
-                                    <h2 className="font-bold">{displayInfo?.name}</h2>
-                                    <span className="text-xs text-gray-500">View Profile</span>
-                                </div>
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Messages */}
-                    <div
-                        className="flex-1 overflow-y-auto p-4 space-y-2 z-10 custom-scrollbar scroll-smooth"
-                        onScroll={handleScroll}
-                        ref={scrollContainerRef}
-                    >
-                        {activeMessages.map((msg, idx) => {
-                            const isMe = msg.sender_id === user?.id;
-                            const showDateSep = idx === 0 || new Date(msg.created_at).toDateString() !== new Date(activeMessages[idx - 1].created_at).toDateString();
-
-                            return (
-                                <React.Fragment key={msg.id}>
-                                    {showDateSep && (
-                                        <div className="flex justify-center my-4">
-                                            <span className="bg-gray-200 dark:bg-gray-700 text-xs px-3 py-1 rounded-full">{new Date(msg.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                    )}
-                                    <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm text-sm ${isMe ? 'bg-primary-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-700'}`}>
-                                            <div className="break-words">{renderMessageContent(msg.content, isMe)}</div>
-                                            {/* Request Buttons (Simplified) */}
-                                            {msg.request_id && !isMe && msg.request_status === 'pending' && (
-                                                <div className="mt-2 pt-2 border-t flex gap-2">
-                                                    <button onClick={() => api.splits.respondToRequest(msg.request_id!, 'accepted').then(() => fetchChatMessages(activeChatId!))} className="bg-green-500 text-white px-3 py-1 rounded text-xs">Accept</button>
-                                                    <button onClick={() => api.splits.respondToRequest(msg.request_id!, 'rejected').then(() => fetchChatMessages(activeChatId!))} className="bg-gray-200 text-gray-800 px-3 py-1 rounded text-xs">Reject</button>
-                                                </div>
-                                            )}
-                                            <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-primary-100' : 'text-gray-400'}`}>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                        </div>
-                                    </div>
-                                </React.Fragment>
-                            );
-                        })}
-                        <div ref={messagesEndRef} />
-                        {showScrollBottom && (
-                            <button onClick={scrollToBottom} className="absolute bottom-20 right-6 bg-white p-2 rounded-full shadow-lg text-primary-600 animate-bounce"><ChevronDown size={24} /></button>
-                        )}
-                    </div>
-
-                    {/* Input */}
-                    <div className="p-3 bg-white dark:bg-gray-800 flex items-center gap-2 z-10 border-t border-gray-200 dark:border-gray-700 relative">
-                        {/* Mention Popup */}
-                        {mentionQuery && filteredVendors.length > 0 && (
-                            <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border overflow-hidden z-50">
-                                {filteredVendors.map(v => (
-                                    <button key={v.id} onClick={() => insertMention(v)} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">{v.name}</button>
-                                ))}
-                            </div>
-                        )}
-                        <form onSubmit={handleSendMessage} className="flex-1 flex items-center gap-2">
-                            <input
-                                ref={inputRef}
-                                value={inputText}
-                                onChange={handleInputChange}
-                                placeholder="Type a message..."
-                                className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full px-6 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            />
-                            <button type="submit" disabled={!inputText.trim()} className={`p-3 rounded-full transition-all ${inputText.trim() ? 'bg-primary-600 text-white hover:bg-primary-700' : 'bg-gray-100 text-gray-400'}`}>
-                                <Send size={20} />
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            ) : (
-                <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 border-b-[6px] border-primary-600 text-center p-10">
-                    <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mb-6 text-primary-600 animate-bounce-slow">
-                        <MoreVertical size={48} className="rotate-90" />
-                    </div>
-                    <h2 className="text-3xl font-light text-gray-800 dark:text-gray-200 mb-4">Food-Hunt Messenger</h2>
-                    <p className="text-gray-500">Connect with foodies instantly.</p>
-                </div>
-            )}
-
-            <ConfirmationModal
-                isOpen={confirmModal.isOpen}
-                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
-                onConfirm={confirmModal.action}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                isDestructive={confirmModal.isDestructive}
-            />
         </div>
     );
 };

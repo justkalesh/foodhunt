@@ -4,7 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/mockDatabase';
 import { UserRole, Vendor, MenuItem } from '../types';
-import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle, Utensils, Star, Camera, Loader2 } from 'lucide-react';
+import { Trash2, Edit, Plus, ChevronLeft, X, AlertTriangle, Utensils, Star, Camera, Loader2, Shield, Store, Users, LayoutDashboard, Sparkles } from 'lucide-react';
+import { PageLoading } from '../components/ui/LoadingSpinner';
 
 const AdminVendors: React.FC = () => {
   const { user } = useAuth();
@@ -368,68 +369,116 @@ const AdminVendors: React.FC = () => {
     }));
   };
 
-  if (loading) return <div className="p-10 text-center dark:text-white">Loading Vendors...</div>;
+  if (loading) return <PageLoading message="Loading vendors..." />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <Link to="/admin" className="text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 mb-4 text-sm font-medium">
-            <ChevronLeft size={16} /> Back to Dashboard
-          </Link>
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold dark:text-white">Manage Vendors</h1>
-            <button
-              onClick={openAddModal}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"
-            >
-              <Plus size={20} /> Add Vendor
-            </button>
-          </div>
+    <div className="min-h-screen">
+      {/* Hero Header with Tab Navigation */}
+      <div className="relative overflow-hidden border-b border-gray-100 dark:border-slate-800">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-accent-sky/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="bg-white dark:bg-dark-800 shadow-md rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 pt-12 pb-8 relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg">
+                <Shield size={32} />
+              </div>
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium mb-2">
+                  <Sparkles size={14} />
+                  Admin Access
+                </span>
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                  Manage <span className="text-primary-600">Vendors</span>
+                </h1>
+              </div>
+            </div>
+
+            <button
+              onClick={openAddModal}
+              className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg hover:shadow-primary-500/30 transition-all hover:-translate-y-0.5"
+            >
+              <Plus size={20} />
+              Add Vendor
+            </button>
+          </div>
+
+          {/* Pill-shaped Tab Switcher */}
+          <div className="flex justify-center">
+            <div className="inline-flex p-1.5 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+              {[
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+                { id: 'vendors', label: 'Vendors', icon: Store, path: '/admin/vendors' },
+                { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
+              ].map((tab) => (
+                <Link
+                  key={tab.id}
+                  to={tab.path}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${tab.id === 'vendors'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
+                    }`}
+                >
+                  <tab.icon size={18} />
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Table Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-gray-100 dark:divide-slate-800">
+              <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Details</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Pricing ($)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Details</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pricing (₹)</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
                 {vendors.map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <tr key={vendor.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 rounded-full object-cover" src={vendor.logo_url || vendor.menu_image_urls?.[0]} alt="" />
+                        <div className="h-12 w-12 flex-shrink-0">
+                          <img className="h-12 w-12 rounded-xl object-cover border border-gray-100 dark:border-slate-700" src={vendor.logo_url || vendor.menu_image_urls?.[0]} alt="" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                          <div className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             {vendor.name}
-                            {vendor.is_featured && <span className="text-xs bg-yellow-100 text-yellow-800 px-1 rounded">⭐</span>}
+                            {vendor.is_featured && <span className="text-xs bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-2 py-0.5 rounded-full font-bold">⭐ Featured</span>}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">{vendor.location}</div>
-                          <div className="text-xs text-gray-400">Order: {vendor.sort_order}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">Order: {vendor.sort_order}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{vendor.cuisine}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-100">{vendor.cuisine}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">{vendor.origin_tag}</div>
                       <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">{vendor.contact_number}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                      Low: {vendor.lowest_item_price} / Avg: {vendor.avg_price_per_meal}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold text-gray-900 dark:text-white">₹{vendor.lowest_item_price}</span> - ₹{vendor.avg_price_per_meal}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleToggleStatus(vendor)}
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${vendor.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'} transition-colors cursor-pointer`}
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full transition-colors cursor-pointer ${vendor.is_active
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                          }`}
                       >
                         {vendor.is_active ? 'Active' : 'Inactive'}
                       </button>
@@ -777,8 +826,8 @@ const AdminVendors: React.FC = () => {
                                   type="button"
                                   onClick={() => setEditHasSizes(!editHasSizes)}
                                   className={`px-3 py-2 rounded-lg text-sm font-bold transition-colors ${editHasSizes
-                                      ? 'bg-primary-600 text-white'
-                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                     }`}
                                 >
                                   S/M/L
