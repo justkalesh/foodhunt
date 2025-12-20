@@ -16,6 +16,25 @@ const Chatbot: React.FC = () => {
     const [vendors, setVendors] = useState<Vendor[]>([]); // Store vendors
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // State to track if floating action bar is visible (for mobile positioning)
+    const [floatingBarVisible, setFloatingBarVisible] = useState(false);
+
+    // Listen for floating bar visibility changes from VendorDetail page
+    useEffect(() => {
+        const checkFloatingBar = () => {
+            setFloatingBarVisible(document.body.hasAttribute('data-floating-bar'));
+        };
+
+        // Initial check
+        checkFloatingBar();
+
+        // Use MutationObserver to detect attribute changes on body
+        const observer = new MutationObserver(checkFloatingBar);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['data-floating-bar'] });
+
+        return () => observer.disconnect();
+    }, []);
+
     // Fetch vendors on mount for linking logic
     useEffect(() => {
         const fetchVendors = async () => {
@@ -160,7 +179,7 @@ const Chatbot: React.FC = () => {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className={`fixed right-6 z-50 transition-all duration-300 ${floatingBarVisible ? 'bottom-24' : 'bottom-6'}`}>
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}

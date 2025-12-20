@@ -162,6 +162,23 @@ const VendorDetail: React.FC = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Set data attribute on body when floating action bar is visible (for chatbot positioning)
+    useEffect(() => {
+        const isFloatingBarVisible = scrollY > 200;
+        // Only apply on mobile (md breakpoint is 768px)
+        const isMobile = window.innerWidth < 768;
+
+        if (isFloatingBarVisible && isMobile) {
+            document.body.setAttribute('data-floating-bar', 'true');
+        } else {
+            document.body.removeAttribute('data-floating-bar');
+        }
+
+        return () => {
+            document.body.removeAttribute('data-floating-bar');
+        };
+    }, [scrollY]);
+
     useEffect(() => {
         if (showMenuModal) setCurrentImageIndex(0);
     }, [showMenuModal]);
