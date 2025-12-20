@@ -97,7 +97,7 @@ const VendorList: React.FC = () => {
   if (loading) return <PageLoading message="Loading campus vendors..." />;
 
   return (
-    <div className="min-h-screen glass-card">
+    <div className="min-h-screen">
       {/* Hero Header */}
       <div className="relative overflow-hidden border-b border-gray-100 dark:border-gray-800">
         <div className="absolute inset-0 pointer-events-none">

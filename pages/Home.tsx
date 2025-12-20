@@ -1,20 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Search, Users, Star, Sparkles, Utensils, MessageCircle, Award } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { ArrowRight, Search, Users, Star, Sparkles, Utensils, Award } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 
 const Home: React.FC = () => {
   return (
-    <div className="min-h-screen glass-card">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Gradient Blobs */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-accent-sky/15 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-lime/10 rounded-full blur-3xl" />
-        </div>
+      <section className="relative bg-white dark:bg-slate-950 overflow-hidden">
+        {/* Gradient Blob Effect */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary-500/10 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
@@ -38,24 +33,19 @@ const Home: React.FC = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link to="/vendors">
-                <Button
-                  size="lg"
-                  leftIcon={<Search size={22} />}
-                  className="!rounded-full !px-8 shadow-glow-primary"
-                >
-                  Browse Food
-                </Button>
+              <Link
+                to="/vendors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-primary-600 text-white font-bold text-lg shadow-lg hover:shadow-primary-500/30 hover:-translate-y-1 transition-all duration-300"
+              >
+                <Search size={22} />
+                Browse Food
               </Link>
-              <Link to="/splits">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  leftIcon={<Users size={22} />}
-                  className="!rounded-full !px-8 !bg-white dark:!bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-lg"
-                >
-                  Find a Squad
-                </Button>
+              <Link
+                to="/splits"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-bold text-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-300"
+              >
+                <Users size={22} />
+                Find a Squad
               </Link>
             </div>
           </div>
@@ -63,34 +53,27 @@ const Home: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-16 border-y border-gray-100 dark:border-gray-800">
+      <section className="bg-white dark:bg-slate-900 border-y border-gray-100 dark:border-slate-800 py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { value: '10+', label: 'Campus Vendors', icon: Utensils, color: 'primary' },
-              { value: '₹35-220', label: 'Meal Price Range', icon: Star, color: 'sky' },
-              { value: 'Save 50%', label: 'By Splitting Meals', icon: Users, color: 'lime' },
+              { value: '10+', label: 'Campus Vendors', icon: Utensils },
+              { value: '₹35-220', label: 'Meal Price Range', icon: Star },
+              { value: 'Save 50%', label: 'By Splitting Meals', icon: Users },
             ].map((stat, idx) => (
               <div
                 key={idx}
-                className="stagger-item group relative bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
+                className="stagger-item text-center p-6"
+                style={{ animationDelay: `${idx * 0.1}s` }}
               >
-                {/* Gradient blob decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-primary-500/10 transition-all" />
-
-                <div className="relative z-10 text-center">
-                  <div className={`w-14 h-14 mx-auto mb-4 rounded-xl flex items-center justify-center ${stat.color === 'primary' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' :
-                      stat.color === 'sky' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600' :
-                        'bg-lime-100 dark:bg-lime-900/30 text-lime-600'
-                    }`}>
-                    <stat.icon size={24} />
-                  </div>
-                  <div className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400 font-medium">
-                    {stat.label}
-                  </div>
+                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600">
+                  <stat.icon size={24} />
+                </div>
+                <div className="text-4xl font-extrabold text-primary-600 mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-gray-500 dark:text-gray-400 font-medium">
+                  {stat.label}
                 </div>
               </div>
             ))}
@@ -99,7 +82,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4">
           <Card variant="glass" padding="lg" hover={false} className="overflow-hidden">
             <div className="relative z-10">
@@ -138,7 +121,7 @@ const Home: React.FC = () => {
                     icon: Award,
                     color: 'bg-accent-lime'
                   },
-                ].map((step, i) => (
+                ].map((step) => (
                   <div key={step.num} className="text-center group">
                     <div
                       className={`w-20 h-20 mx-auto rounded-2xl ${step.color} flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
@@ -181,17 +164,19 @@ const Home: React.FC = () => {
             Join hundreds of students saving money and making friends over food.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/register">
-              <button className="bg-white text-primary-600 px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all transform hover:-translate-y-0.5 shadow-xl flex items-center justify-center gap-2">
-                Get Started Free
-                <ArrowRight size={20} />
-              </button>
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-white text-primary-600 font-bold text-lg hover:bg-gray-100 transition-all transform hover:-translate-y-0.5 shadow-xl"
+            >
+              Get Started Free
+              <ArrowRight size={20} />
             </Link>
-            <Link to="/vendors">
-              <button className="bg-primary-800/50 backdrop-blur-sm text-white border border-primary-400/30 px-10 py-4 rounded-full font-bold text-lg hover:bg-primary-800 transition-all flex items-center justify-center gap-2">
-                <Search size={20} />
-                Explore Vendors
-              </button>
+            <Link
+              to="/vendors"
+              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-primary-800/50 backdrop-blur-sm text-white border border-primary-400/30 font-bold text-lg hover:bg-primary-800 transition-all"
+            >
+              <Search size={20} />
+              Explore Vendors
             </Link>
           </div>
         </div>

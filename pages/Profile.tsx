@@ -100,7 +100,7 @@ const Profile: React.FC = () => {
 
    if (loading) return <PageLoading message="Loading profile..." />;
    if (!displayUser) return (
-      <div className="min-h-screen glass-card flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
          <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                <Users size={32} className="text-gray-400" />
@@ -114,7 +114,7 @@ const Profile: React.FC = () => {
    const badge = getLoyaltyBadge(displayUser.loyalty_points || 0);
 
    return (
-      <div className="min-h-screen glass-card">
+      <div className="min-h-screen">
          {/* Hero Header */}
          <div className="relative overflow-hidden border-b border-gray-100 dark:border-gray-800">
             <div className="absolute inset-0 pointer-events-none">
@@ -261,9 +261,9 @@ const Profile: React.FC = () => {
                      <div className="absolute top-0 right-0 w-20 h-20 bg-primary-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-primary-500/10 transition-all" />
                      <div className="relative z-10 text-center">
                         <div className={`w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center ${stat.color === 'primary' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' :
-                              stat.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600' :
-                                 stat.color === 'sky' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600' :
-                                    'bg-lime-100 dark:bg-lime-900/30 text-lime-600'
+                           stat.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600' :
+                              stat.color === 'sky' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600' :
+                                 'bg-lime-100 dark:bg-lime-900/30 text-lime-600'
                            }`}>
                            <stat.icon size={20} />
                         </div>
@@ -301,8 +301,8 @@ const Profile: React.FC = () => {
                                        key={opt.value}
                                        onClick={() => setTheme(opt.value as any)}
                                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-all ${theme === opt.value
-                                             ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
-                                             : 'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-slate-600'
+                                          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
+                                          : 'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-slate-600'
                                           }`}
                                     >
                                        <opt.icon size={18} />
@@ -397,8 +397,8 @@ const Profile: React.FC = () => {
                                     <div className="text-xs text-gray-500 dark:text-gray-400">at {s.vendor_name}</div>
                                  </div>
                                  <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold ${s.is_closed
-                                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                                       : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                     }`}>
                                     {s.is_closed ? 'Closed' : 'Active'}
                                  </span>

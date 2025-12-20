@@ -45,31 +45,41 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/50 via-white to-orange-50/30 dark:bg-none dark:bg-dark-900 transition-colors duration-200">
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-        <Route path="/vendors" element={<VendorList />} />
-        <Route path="/vendors/:id" element={<VendorDetail />} />
-        <Route path="/splits" element={<MealSplits />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/:userId" element={<Profile />} />
+    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-gray-100 transition-colors duration-300 relative overflow-hidden">
+      {/* Global Gradient Blobs for Glassmorphism Effect */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-0 w-80 h-80 bg-accent-sky/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-64 h-64 bg-accent-lime/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
+      </div>
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/vendors" element={<AdminVendors />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/terms" element={<TermsAndConditions />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
+      <div className="relative z-10">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/vendors" element={<VendorList />} />
+          <Route path="/vendors/:id" element={<VendorDetail />} />
+          <Route path="/splits" element={<MealSplits />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
 
-        <Route path="/inbox" element={<Inbox />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      {showChatbot && <Chatbot />}
-      <CookieBanner />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/vendors" element={<AdminVendors />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+
+          <Route path="/inbox" element={<Inbox />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        {showChatbot && <Chatbot />}
+        <CookieBanner />
+      </div>
     </div>
   );
 };

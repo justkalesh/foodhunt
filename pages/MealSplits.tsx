@@ -746,7 +746,7 @@ const MealSplits: React.FC = () => {
   if (loading) return <PageLoading message="Loading meal splits..." />;
 
   return (
-    <div className="min-h-screen glass-card">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="hero-pattern relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 pt-12 pb-16 relative z-10">
