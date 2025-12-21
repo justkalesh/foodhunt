@@ -180,6 +180,7 @@ const VendorList: React.FC = () => {
                   <img
                     src={vendor.logo_url || vendor.menu_image_urls?.[0]}
                     alt={vendor.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
 

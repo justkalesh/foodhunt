@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
           name: 'Food-Hunt',
           short_name: 'FoodHunt',
           description: 'Campus food discovery and meal-splitting app',
+          start_url: '/',
           theme_color: '#f97316',
           background_color: '#ffffff',
           display: 'standalone',

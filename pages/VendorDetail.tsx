@@ -273,6 +273,7 @@ const VendorDetail: React.FC = () => {
                 <img
                     src={vendor.menu_image_urls?.[0] || vendor.logo_url}
                     alt={vendor.name}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-100"
                     style={{ transform: `translateY(${scrollY * 0.3}px) scale(1.1)` }}
                 />
@@ -293,7 +294,7 @@ const VendorDetail: React.FC = () => {
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-end gap-4 md:gap-6">
                             {vendor.logo_url && (
-                                <img src={vendor.logo_url} alt="Logo" className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white shadow-2xl object-cover" />
+                                <img src={vendor.logo_url} alt="Logo" loading="lazy" className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white shadow-2xl object-cover" />
                             )}
                             <div className="flex-1">
                                 <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">{vendor.name}</h1>
@@ -391,7 +392,7 @@ const VendorDetail: React.FC = () => {
                         <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900 relative group cursor-pointer border dark:border-gray-700" onClick={() => setShowMenuModal(true)}>
                             {vendor.menu_image_urls && vendor.menu_image_urls.length > 0 ? (
                                 <>
-                                    <img src={vendor.menu_image_urls[0]} alt="Menu Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                    <img src={vendor.menu_image_urls[0]} alt="Menu Preview" loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                                         <span className="bg-white/95 text-gray-900 px-5 py-2.5 rounded-full font-bold shadow-xl transform scale-90 group-hover:scale-100 transition-all">
                                             {vendor.menu_image_urls.length > 1 ? `View ${vendor.menu_image_urls.length} Menu Pages` : 'View Menu'}
@@ -486,7 +487,7 @@ const VendorDetail: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => setShowMenuModal(false)}>
                     <button onClick={() => setShowMenuModal(false)} className="absolute top-4 right-4 text-white/70 hover:text-white z-50"><X size={32} /></button>
                     <div className="relative max-w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                        <img src={vendor.menu_image_urls?.[currentImageIndex]} alt={`Menu Page ${currentImageIndex + 1}`} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                        <img src={vendor.menu_image_urls?.[currentImageIndex]} alt={`Menu Page ${currentImageIndex + 1}`} loading="lazy" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
                         {vendor.menu_image_urls && vendor.menu_image_urls.length > 1 && (
                             <>
                                 <button onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev > 0 ? prev - 1 : (vendor.menu_image_urls?.length || 1) - 1); }} className="absolute left-[-50px] top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-sm"><ChevronLeft size={32} /></button>

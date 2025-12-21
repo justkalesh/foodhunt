@@ -132,10 +132,11 @@ alter table public.meal_splits enable row level security;
 create policy "Authenticated users can view splits" on public.meal_splits for select using (auth.role() = 'authenticated');
 -- Authenticated users can create splits
 create policy "Authenticated users can create splits" on public.meal_splits for insert with check (auth.role() = 'authenticated');
--- Users can update splits they are part of (e.g. joining) or created
--- checking connection to an array column is tricky in policy without advanced operators, 
--- but for now we allow update if authenticated (application logic handles specific rules).
-create policy "Authenticated users can update splits" on public.meal_splits for update using (auth.role() = 'authenticated');
+-- SECURE: Only the creator can update their own split
+create policy "Creators can update splits" 
+on public.meal_splits 
+for update 
+using (auth.uid()::text = creator_id);
 create policy "Creators can delete splits" on public.meal_splits for delete using (auth.uid()::text = creator_id);
 
 
