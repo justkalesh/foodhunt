@@ -33,7 +33,7 @@ const recalculateVendorStats = async (vendorId: string) => {
     if (item.price && item.price > 0) return item.price;
 
     // Otherwise check S/M/L prices and return the lowest available
-    const sizePrices = [item.small_price, item.medium_price, item.large_price]
+    const sizePrices = [item.small_price, item.medium_price, item.large_price, item.xl_price]
       .filter((p): p is number => p != null && p > 0);
 
     if (sizePrices.length > 0) return Math.min(...sizePrices);
@@ -401,13 +401,14 @@ export const api = {
       name: string,
       price: number,
       category?: string,
-      sizePrices?: { small_price?: number; medium_price?: number; large_price?: number }
+      sizePrices?: { small_price?: number; medium_price?: number; large_price?: number; xl_price?: number }
     ): Promise<GenericResponse<MenuItem>> => {
       try {
         const insertData: any = { vendor_id: vendorId, name, price, category, is_active: true };
         if (sizePrices?.small_price !== undefined) insertData.small_price = sizePrices.small_price;
         if (sizePrices?.medium_price !== undefined) insertData.medium_price = sizePrices.medium_price;
         if (sizePrices?.large_price !== undefined) insertData.large_price = sizePrices.large_price;
+        if (sizePrices?.xl_price !== undefined) insertData.xl_price = sizePrices.xl_price;
 
         const { data, error } = await supabase
           .from('menu_items')

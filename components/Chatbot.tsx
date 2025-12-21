@@ -3,10 +3,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { generateBotResponse } from '../services/geminiService';
 import { api } from '../services/mockDatabase';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link, useLocation } from 'react-router-dom'; // Import Link and useLocation
 import { Vendor } from '../types'; // Import Vendor
 
 const Chatbot: React.FC = () => {
+    const location = useLocation();
+
+    // Hide chatbot on admin pages
+    const isAdminPage = location.pathname.startsWith('/admin');
+    if (isAdminPage) {
+        return null;
+    }
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<{ role: 'user' | 'bot', text: string }[]>([
         { role: 'bot', text: 'Hey! Hungry? Ask me about cheap food, healthy options, or where to find pizza!' }

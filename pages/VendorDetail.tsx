@@ -92,13 +92,15 @@ const CategorySection = ({ title, items }: { title: string, items: MenuItem[] })
         const hasSmall = item.small_price != null;
         const hasMedium = item.medium_price != null;
         const hasLarge = item.large_price != null;
-        const hasSizes = hasSmall || hasMedium || hasLarge;
+        const hasXl = item.xl_price != null;
+        const hasSizes = hasSmall || hasMedium || hasLarge || hasXl;
 
         if (hasSizes) {
             const sizes = [];
             if (hasSmall) sizes.push(`S: ₹${item.small_price}`);
             if (hasMedium) sizes.push(`M: ₹${item.medium_price}`);
             if (hasLarge) sizes.push(`L: ₹${item.large_price}`);
+            if (hasXl) sizes.push(`XL: ₹${item.xl_price}`);
             return <span className="font-bold text-green-600 text-sm">{sizes.join(' | ')}</span>;
         }
         return <span className="font-bold text-green-600">₹{item.price}</span>;

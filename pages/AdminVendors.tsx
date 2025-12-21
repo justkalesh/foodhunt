@@ -35,6 +35,7 @@ const AdminVendors: React.FC = () => {
   const [smallPrice, setSmallPrice] = useState('');
   const [mediumPrice, setMediumPrice] = useState('');
   const [largePrice, setLargePrice] = useState('');
+  const [xlPrice, setXlPrice] = useState('');
 
   // Edit Menu Item State
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ const AdminVendors: React.FC = () => {
   const [editSmallPrice, setEditSmallPrice] = useState('');
   const [editMediumPrice, setEditMediumPrice] = useState('');
   const [editLargePrice, setEditLargePrice] = useState('');
+  const [editXlPrice, setEditXlPrice] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Menu Scanning State
@@ -85,7 +87,7 @@ const AdminVendors: React.FC = () => {
       alert('Please enter a price');
       return;
     }
-    if (hasSizeVariants && !smallPrice && !mediumPrice && !largePrice) {
+    if (hasSizeVariants && !smallPrice && !mediumPrice && !largePrice && !xlPrice) {
       alert('Please enter at least one size price');
       return;
     }
@@ -100,6 +102,7 @@ const AdminVendors: React.FC = () => {
         small_price: smallPrice ? parseFloat(smallPrice) : undefined,
         medium_price: mediumPrice ? parseFloat(mediumPrice) : undefined,
         large_price: largePrice ? parseFloat(largePrice) : undefined,
+        xl_price: xlPrice ? parseFloat(xlPrice) : undefined,
       } : undefined
     );
 
@@ -111,6 +114,7 @@ const AdminVendors: React.FC = () => {
       setSmallPrice('');
       setMediumPrice('');
       setLargePrice('');
+      setXlPrice('');
       setHasSizeVariants(false);
     } else {
       alert(res.message);
@@ -216,7 +220,8 @@ const AdminVendors: React.FC = () => {
     const hasSmall = item.small_price != null;
     const hasMedium = item.medium_price != null;
     const hasLarge = item.large_price != null;
-    const hasSizes = hasSmall || hasMedium || hasLarge;
+    const hasXl = item.xl_price != null;
+    const hasSizes = hasSmall || hasMedium || hasLarge || hasXl;
 
     setEditHasSizes(hasSizes);
     if (hasSizes) {
@@ -224,11 +229,13 @@ const AdminVendors: React.FC = () => {
       setEditSmallPrice(item.small_price?.toString() || '');
       setEditMediumPrice(item.medium_price?.toString() || '');
       setEditLargePrice(item.large_price?.toString() || '');
+      setEditXlPrice(item.xl_price?.toString() || '');
     } else {
       setEditPrice(item.price?.toString() || '');
       setEditSmallPrice('');
       setEditMediumPrice('');
       setEditLargePrice('');
+      setEditXlPrice('');
     }
   };
 
@@ -241,6 +248,7 @@ const AdminVendors: React.FC = () => {
     setEditSmallPrice('');
     setEditMediumPrice('');
     setEditLargePrice('');
+    setEditXlPrice('');
   };
 
   const handleSaveEdit = async () => {
@@ -254,7 +262,7 @@ const AdminVendors: React.FC = () => {
       alert('Please enter a price');
       return;
     }
-    if (editHasSizes && !editSmallPrice && !editMediumPrice && !editLargePrice) {
+    if (editHasSizes && !editSmallPrice && !editMediumPrice && !editLargePrice && !editXlPrice) {
       alert('Please enter at least one size price');
       return;
     }
@@ -271,6 +279,7 @@ const AdminVendors: React.FC = () => {
       small_price: editHasSizes && editSmallPrice ? parseFloat(editSmallPrice) : undefined,
       medium_price: editHasSizes && editMediumPrice ? parseFloat(editMediumPrice) : undefined,
       large_price: editHasSizes && editLargePrice ? parseFloat(editLargePrice) : undefined,
+      xl_price: editHasSizes && editXlPrice ? parseFloat(editXlPrice) : undefined,
     };
 
     const res = await api.vendors.updateMenuItem(updatedItem);
@@ -650,9 +659,9 @@ const AdminVendors: React.FC = () => {
                         type="button"
                         onClick={() => setHasSizeVariants(true)}
                         className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold"
-                        title="Enable S/M/L sizes"
+                        title="Enable S/M/L/XL sizes"
                       >
-                        S/M/L
+                        S/M/L/XL
                       </button>
                     </div>
                     <input
@@ -670,7 +679,7 @@ const AdminVendors: React.FC = () => {
                         <label className="block text-xs font-bold text-gray-500 uppercase">Small</label>
                         <button
                           type="button"
-                          onClick={() => { setHasSizeVariants(false); setSmallPrice(''); setMediumPrice(''); setLargePrice(''); }}
+                          onClick={() => { setHasSizeVariants(false); setSmallPrice(''); setMediumPrice(''); setLargePrice(''); setXlPrice(''); }}
                           className="text-xs text-red-500 hover:text-red-700"
                           title="Switch to single price"
                         >
@@ -695,13 +704,23 @@ const AdminVendors: React.FC = () => {
                         className="w-full p-2 rounded-xl border dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm"
                       />
                     </div>
-                    <div className="w-20">
+                    <div className="w-16">
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Large</label>
                       <input
                         type="number"
                         placeholder="L"
                         value={largePrice}
                         onChange={(e) => setLargePrice(e.target.value)}
+                        className="w-full p-2 rounded-xl border dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm"
+                      />
+                    </div>
+                    <div className="w-16">
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">XL</label>
+                      <input
+                        type="number"
+                        placeholder="XL"
+                        value={xlPrice}
+                        onChange={(e) => setXlPrice(e.target.value)}
                         className="w-full p-2 rounded-xl border dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm"
                       />
                     </div>
@@ -758,14 +777,15 @@ const AdminVendors: React.FC = () => {
                                   : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
                                   }`}
                               >
-                                S/M/L
+                                S/M/L/XL
                               </button>
 
                               {editHasSizes ? (
                                 <>
-                                  <input type="number" value={editSmallPrice} onChange={(e) => setEditSmallPrice(e.target.value)} placeholder="S ₹" className="w-[70px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
-                                  <input type="number" value={editMediumPrice} onChange={(e) => setEditMediumPrice(e.target.value)} placeholder="M ₹" className="w-[70px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
-                                  <input type="number" value={editLargePrice} onChange={(e) => setEditLargePrice(e.target.value)} placeholder="L ₹" className="w-[70px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
+                                  <input type="number" value={editSmallPrice} onChange={(e) => setEditSmallPrice(e.target.value)} placeholder="S ₹" className="w-[60px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
+                                  <input type="number" value={editMediumPrice} onChange={(e) => setEditMediumPrice(e.target.value)} placeholder="M ₹" className="w-[60px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
+                                  <input type="number" value={editLargePrice} onChange={(e) => setEditLargePrice(e.target.value)} placeholder="L ₹" className="w-[60px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
+                                  <input type="number" value={editXlPrice} onChange={(e) => setEditXlPrice(e.target.value)} placeholder="XL ₹" className="w-[60px] px-2 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
                                 </>
                               ) : (
                                 <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} placeholder="Price ₹" className="w-[100px] px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm" />
@@ -801,13 +821,15 @@ const AdminVendors: React.FC = () => {
                               >
                                 <Star size={18} className={item.is_recommended ? "fill-yellow-400" : ""} />
                               </button>
-                              {(item.small_price != null || item.medium_price != null || item.large_price != null) ? (
+                              {(item.small_price != null || item.medium_price != null || item.large_price != null || item.xl_price != null) ? (
                                 <span className="font-bold text-green-600 text-sm">
                                   {item.small_price != null && `S:₹${item.small_price}`}
-                                  {item.small_price != null && (item.medium_price != null || item.large_price != null) && ' | '}
+                                  {item.small_price != null && (item.medium_price != null || item.large_price != null || item.xl_price != null) && ' | '}
                                   {item.medium_price != null && `M:₹${item.medium_price}`}
-                                  {item.medium_price != null && item.large_price != null && ' | '}
+                                  {item.medium_price != null && (item.large_price != null || item.xl_price != null) && ' | '}
                                   {item.large_price != null && `L:₹${item.large_price}`}
+                                  {item.large_price != null && item.xl_price != null && ' | '}
+                                  {item.xl_price != null && `XL:₹${item.xl_price}`}
                                 </span>
                               ) : (
                                 <span className="font-bold text-green-600">₹{item.price}</span>

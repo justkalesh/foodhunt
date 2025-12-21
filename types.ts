@@ -74,6 +74,7 @@ export interface MenuItem {
   small_price?: number;
   medium_price?: number;
   large_price?: number;
+  xl_price?: number;
 }
 
 // Keep existing types for MealSplit to maintain feature compatibility
