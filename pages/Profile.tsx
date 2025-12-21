@@ -337,6 +337,27 @@ const Profile: React.FC = () => {
 
                {/* Right Column: Activity */}
                <div className={`${isOwnProfile ? 'md:col-span-2' : 'w-full'} space-y-6`}>
+                  {/* Recent Reviews */}
+                  <Card variant="default" className="relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                     <div className="relative z-10">
+                        <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                           <Star size={18} className="text-yellow-500" /> Recent Reviews
+                        </h3>
+                        <div className="space-y-3">
+                           {activity.recentReviews.length > 0 ? activity.recentReviews.map(r => (
+                              <div key={r.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                                 <div className="flex justify-between text-sm mb-2">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{(r as any).vendor_name || r.vendor_id}</span>
+                                    <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
+                                 </div>
+                                 <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">"{r.review_text}"</p>
+                              </div>
+                           )) : <p className="text-gray-400 italic text-sm">No reviews yet.</p>}
+                        </div>
+                     </div>
+                  </Card>
+
                   {/* Active Split */}
                   <Card variant="default" className="relative overflow-hidden">
                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -361,27 +382,6 @@ const Profile: React.FC = () => {
                      </div>
                   </Card>
 
-                  {/* Recent Reviews */}
-                  <Card variant="default" className="relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                     <div className="relative z-10">
-                        <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                           <Star size={18} className="text-yellow-500" /> Recent Reviews
-                        </h3>
-                        <div className="space-y-3">
-                           {activity.recentReviews.length > 0 ? activity.recentReviews.map(r => (
-                              <div key={r.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-semibold text-gray-900 dark:text-white">{(r as any).vendor_name || r.vendor_id}</span>
-                                    <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
-                                 </div>
-                                 <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">"{r.review_text}"</p>
-                              </div>
-                           )) : <p className="text-gray-400 italic text-sm">No reviews yet.</p>}
-                        </div>
-                     </div>
-                  </Card>
-
                   {/* Recent Splits */}
                   <Card variant="default" className="relative overflow-hidden">
                      <div className="absolute top-0 right-0 w-32 h-32 bg-accent-sky/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -390,7 +390,7 @@ const Profile: React.FC = () => {
                            <Users size={18} className="text-sky-500" /> Recent Splits
                         </h3>
                         <div className="space-y-3">
-                           {activity.recentSplits.length > 0 ? activity.recentSplits.slice(0, 3).map(s => (
+                           {activity.recentSplits.filter(s => s.is_closed).length > 0 ? activity.recentSplits.filter(s => s.is_closed).slice(0, 1).map(s => (
                               <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                                  <div>
                                     <div className="font-bold text-sm text-gray-900 dark:text-white">{s.dish_name}</div>
