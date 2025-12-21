@@ -280,7 +280,7 @@ flowchart LR
     F --> G[Bulk insert to menu_items]
 ```
 
-**Extracts:** Name, category, price, size variants (S/M/L)
+**Extracts:** Name, category, price, size variants (S/M/L/XL)
 
 **Key file:** [scan-menu.js](file:///c:/Important/Code/Food-Hunt/api/scan-menu.js)
 
