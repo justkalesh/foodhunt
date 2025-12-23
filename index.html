@@ -100,7 +100,68 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900 dark:bg-dark-900 dark:text-gray-100 transition-colors duration-200">
+  <!-- Fallback UI for Instagram/Facebook in-app browsers -->
+  <div id="fallback"
+    style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:white;font-family:'Plus Jakarta Sans',sans-serif;z-index:9999;">
+    <div
+      style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;">
+      <img src="/logo.png" alt="Food-Hunt" style="width:80px;height:80px;margin-bottom:24px;border-radius:16px;">
+      <h1
+        style="font-size:28px;font-weight:700;margin-bottom:12px;background:linear-gradient(90deg,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+        Food-Hunt</h1>
+      <p style="color:#94a3b8;margin-bottom:32px;max-width:300px;">For the best experience, please open this link in
+        your browser</p>
+      <a id="open-browser-btn" href="#"
+        style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);color:white;padding:16px 32px;border-radius:12px;font-weight:600;text-decoration:none;box-shadow:0 4px 20px rgba(249,115,22,0.4);">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+        </svg>
+        Open in Browser
+      </a>
+      <p style="color:#64748b;font-size:12px;margin-top:24px;">Tap the ••• menu above and select "Open in Browser"</p>
+    </div>
+  </div>
+
   <div id="root"></div>
+
+  <script>
+      // Detect Instagram/Facebook in-app browser
+      (function () {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        var isInAppBrowser = /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS/i.test(ua);
+
+        // Set the "Open in Browser" link
+        var link = document.getElementById('open-browser-btn');
+        if (link) {
+          link.href = window.location.href;
+          // For iOS, use special intent
+          if (/iPhone|iPad|iPod/i.test(ua)) {
+            link.href = 'x-safari-' + window.location.href;
+          }
+        }
+
+        // Show fallback after timeout if app doesn't load
+        var timeout = setTimeout(function () {
+          var root = document.getElementById('root');
+          if (!root || root.innerHTML.trim() === '') {
+            document.getElementById('fallback').style.display = 'block';
+          }
+        }, isInAppBrowser ? 2000 : 5000);
+
+        // Clear timeout if app loads successfully
+        window.__clearFallback = function () { clearTimeout(timeout); };
+
+        // Global error handler
+        window.onerror = function (msg, url, line, col, error) {
+          console.error('App Error:', msg);
+          if (isInAppBrowser) {
+            document.getElementById('fallback').style.display = 'block';
+          }
+          return false;
+        };
+      })();
+  </script>
+
   <script type="module" src="/index.tsx"></script>
 </body>
 
