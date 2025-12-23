@@ -10,7 +10,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PageLoading } from '../components/ui/LoadingSpinner';
-import ConfirmationModal from '../components/ConfirmationModal';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // ============================================
@@ -559,6 +559,14 @@ const MealSplits: React.FC = () => {
   const [sortBy, setSortBy] = useState<'time' | 'price' | 'slots'>('time');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Confirmation modal states
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'leave' | 'complete' | 'delete';
+    split: MealSplit;
+    message: string;
+  } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -655,48 +663,57 @@ const MealSplits: React.FC = () => {
     }
   };
 
-  const handleLeave = async (split: MealSplit) => {
+  // Show leave confirmation modal
+  const handleLeave = (split: MealSplit) => {
     if (!user) return;
-
     const confirmMsg = (split.creator_id === user.id && split.people_joined_ids.length > 1)
       ? 'Leaving will transfer ownership to the next member. Continue?'
       : 'Are you sure you want to leave this split?';
-
-    if (confirm(confirmMsg)) {
-      const res = await api.splits.leave(split.id, user.id);
-      if (res.success) {
-        setMsg(res.message);
-        updateUser({ ...user, active_split_id: null });
-        fetchData();
-        setTimeout(() => setMsg(''), 3000);
-      } else {
-        alert(res.message);
-      }
-    }
+    setPendingAction({ type: 'leave', split, message: confirmMsg });
   };
 
-  const handleComplete = async (split: MealSplit) => {
-    if (confirm('Mark this split as complete? This will close it.')) {
-      // @ts-ignore
-      const res = await api.splits.markAsComplete(split.id);
-      if (res.success) {
-        setMsg(res.message);
-        fetchData();
-      } else {
-        alert(res.message);
-      }
-    }
+  // Show complete confirmation modal
+  const handleComplete = (split: MealSplit) => {
+    setPendingAction({ type: 'complete', split, message: 'Mark this split as complete? This will close it.' });
   };
 
-  const handleDelete = async (split: MealSplit) => {
-    if (confirm('Are you sure you want to delete this split?')) {
-      const res = await api.splits.delete(split.id);
-      if (res.success) {
-        setMsg(res.message);
-        fetchData();
-      } else {
-        alert(res.message);
-      }
+  // Show delete confirmation modal
+  const handleDelete = (split: MealSplit) => {
+    setPendingAction({ type: 'delete', split, message: 'Are you sure you want to delete this split?' });
+  };
+
+  // Execute the pending action
+  const executeAction = async () => {
+    if (!pendingAction || !user) return;
+    setActionLoading(true);
+    let res;
+
+    switch (pendingAction.type) {
+      case 'leave':
+        res = await api.splits.leave(pendingAction.split.id, user.id);
+        if (res.success) {
+          updateUser({ ...user, active_split_id: null });
+        }
+        break;
+      case 'complete':
+        // @ts-ignore
+        res = await api.splits.markAsComplete(pendingAction.split.id);
+        break;
+      case 'delete':
+        res = await api.splits.delete(pendingAction.split.id);
+        break;
+    }
+
+    setActionLoading(false);
+    setPendingAction(null);
+
+    if (res?.success) {
+      setMsg(res.message);
+      fetchData();
+      setTimeout(() => setMsg(''), 3000);
+    } else if (res) {
+      setMsg(res.message);
+      setTimeout(() => setMsg(''), 3000);
     }
   };
 
@@ -1023,6 +1040,19 @@ const MealSplits: React.FC = () => {
         title="Authentication Required"
         message="You need to be signed in to join or create meal splits."
         confirmText="Sign In"
+      />
+
+      {/* Leave/Delete/Complete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!pendingAction}
+        onClose={() => setPendingAction(null)}
+        onConfirm={executeAction}
+        title={pendingAction?.type === 'delete' ? 'Delete Split' : pendingAction?.type === 'leave' ? 'Leave Split' : 'Complete Split'}
+        message={pendingAction?.message || ''}
+        confirmText={pendingAction?.type === 'delete' ? 'Delete' : pendingAction?.type === 'leave' ? 'Leave' : 'Mark Complete'}
+        cancelText="Cancel"
+        variant={pendingAction?.type === 'delete' ? 'danger' : 'warning'}
+        isLoading={actionLoading}
       />
     </div>
   );

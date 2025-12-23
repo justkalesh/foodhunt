@@ -1,16 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
 
 const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const { completeGoogleSignup } = useAuth();
-    // For Supabase, we might not pass user in state because OAuth redirects. 
-    // We rely on getting the current session.
-    const firebaseUser = location.state?.firebaseUser; // Kept for types/legacy, but likely undefined with Supabase OAuth
+    // User arrives here via OAuth redirect when needsCompletion is true
+    // We fetch the current Supabase session to get user info
 
     const [formData, setFormData] = useState({
         name: '',

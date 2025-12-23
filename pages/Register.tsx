@@ -130,17 +130,15 @@ const Register: React.FC = () => {
         <div className="mt-4">
           <button
             onClick={async () => {
-              // We need to import signInWithGoogle here too
+              setError('');
               const res = await signInWithGoogle();
-              if (res.success) {
-                if (res.isNewUser) {
-                  navigate('/complete-profile', { state: { firebaseUser: res.firebaseUser } });
-                } else {
-                  navigate('/');
-                }
-              } else {
+              // OAuth redirects to Google - user won't see this callback
+              // On redirect back, onAuthStateChange handles the session
+              // If profile doesn't exist, needsCompletion triggers /complete-profile redirect
+              if (!res.success) {
                 setError(res.message);
               }
+              // If success, browser is redirecting to Google...
             }}
             className="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 py-3 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2"
           >

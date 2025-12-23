@@ -6,6 +6,7 @@ import { UserRole } from '../types';
 import { seedDatabase } from '../services/seeder';
 import { Shield, Users, Store, Star, Database, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { PageLoading } from '../components/ui/LoadingSpinner';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 
 // Import the sub-components (Assuming you can refactor AdminVendors/AdminUsers to be exported components, 
 // or we lazily render them here. For now, I will build the TAB SHELL).
@@ -20,6 +21,11 @@ const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState({ totalUsers: 0, totalVendors: 0, totalReviews: 0 });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'users'>('overview');
+    const [showSeedModal, setShowSeedModal] = useState(false);
+    const [showSyncModal, setShowSyncModal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [seedResult, setSeedResult] = useState<string | null>(null);
+    const [syncResult, setSyncResult] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user || user.role !== UserRole.ADMIN) {
@@ -35,23 +41,31 @@ const AdminDashboard: React.FC = () => {
     }, [user, navigate]);
 
     const handleSeed = async () => {
-        if (!window.confirm('Add sample data to database?')) return;
-        setLoading(true);
+        setActionLoading(true);
         const res = await seedDatabase();
-        // @ts-ignore
-        alert(res.message);
         const statsRes = await api.admin.getStats();
         if (statsRes.success && statsRes.data) setStats(statsRes.data);
-        setLoading(false);
+        setActionLoading(false);
+        // @ts-ignore
+        setSeedResult(res.message || 'Database seeded successfully!');
     };
 
     const handleSyncRatings = async () => {
-        if (!window.confirm('Sync ratings?')) return;
-        setLoading(true);
+        setActionLoading(true);
         const res = await syncAllVendorRatings();
+        setActionLoading(false);
         // @ts-ignore
-        alert(res.message);
-        setLoading(false);
+        setSyncResult(res.message || 'Ratings synced successfully!');
+    };
+
+    const closeSeedModal = () => {
+        setShowSeedModal(false);
+        setSeedResult(null);
+    };
+
+    const closeSyncModal = () => {
+        setShowSyncModal(false);
+        setSyncResult(null);
     };
 
     if (loading) return <PageLoading message="Initializing Command Centre..." />;
@@ -77,10 +91,10 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2">
-                        <button onClick={handleSyncRatings} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition shadow-sm font-medium text-sm">
+                        <button onClick={() => setShowSyncModal(true)} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition shadow-sm font-medium text-sm">
                             <RefreshCw size={16} /> Sync
                         </button>
-                        <button onClick={handleSeed} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition shadow-sm font-medium text-sm">
+                        <button onClick={() => setShowSeedModal(true)} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition shadow-sm font-medium text-sm">
                             <Database size={16} /> Seed
                         </button>
                     </div>
@@ -162,6 +176,32 @@ const AdminDashboard: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Confirmation Modals */}
+            <ConfirmationModal
+                isOpen={showSeedModal}
+                onClose={closeSeedModal}
+                onConfirm={handleSeed}
+                title="Seed Database"
+                message="Add sample data to the database? This will create new vendors, users, and reviews."
+                confirmText="Seed Data"
+                cancelText="Cancel"
+                variant="warning"
+                isLoading={actionLoading}
+                resultMessage={seedResult || undefined}
+            />
+            <ConfirmationModal
+                isOpen={showSyncModal}
+                onClose={closeSyncModal}
+                onConfirm={handleSyncRatings}
+                title="Sync Ratings"
+                message="Recalculate and sync all vendor ratings and statistics?"
+                confirmText="Sync Now"
+                cancelText="Cancel"
+                variant="default"
+                isLoading={actionLoading}
+                resultMessage={syncResult || undefined}
+            />
         </div>
     );
 };
