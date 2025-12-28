@@ -5,7 +5,6 @@
 <h1 align="center">Food-Hunt</h1>
 <h3 align="center">Find Food, Find Friends.</h3>
 
-<p align="center">A comprehensive campus food discovery and meal-splitting application for students.</p>
 
 ## Tech Stack Overview
 
