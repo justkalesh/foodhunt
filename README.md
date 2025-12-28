@@ -1,6 +1,10 @@
-# Food-Hunt Codebase Analysis
+<p align="center">
+  <img src="public/logo.png" alt="Food-Hunt Logo" width="120" height="120" style="border-radius: 20px;">
+</p>
 
-A comprehensive campus food discovery and meal-splitting application for students.
+<h1 align="center">Food-Hunt</h1>
+
+<p align="center">A comprehensive campus food discovery and meal-splitting application for students.</p>
 
 ## Tech Stack Overview
 

@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env);
 
   return {
+    base: '',  // Required for Capacitor - loads assets from local file system
     server: {
       port: 3000,
       host: '0.0.0.0',
