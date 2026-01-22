@@ -4,6 +4,28 @@ import { User, AuthResponse, UserRole } from '../types';
 import { supabase } from '../services/supabase';
 import { api } from '../services/mockDatabase';
 
+// Generate a unique 6-digit UID
+const generateUniqueUid = async (): Promise<string> => {
+  const maxAttempts = 10;
+  for (let i = 0; i < maxAttempts; i++) {
+    // Generate random 6-digit number (100000-999999)
+    const uid = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Check if it already exists
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('uid', uid)
+      .maybeSingle();
+
+    if (!data) {
+      return uid; // UID is unique
+    }
+  }
+  // Fallback: use timestamp-based UID if random fails
+  return Date.now().toString().slice(-6);
+};
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -108,9 +130,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       if (!authData.user) throw new Error("Signup failed");
 
+      // Generate unique 6-digit UID
+      const uid = await generateUniqueUid();
+
       // Create Public Profile
       const newUser: User = {
         id: authData.user.id,
+        uid: uid,
         email: data.email,
         name: data.name,
         semester: data.semester,
@@ -196,8 +222,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const completeGoogleSignup = async (data: any, supabaseUser: any) => {
     setIsLoading(true);
     try {
+      // Generate unique 6-digit UID
+      const uid = await generateUniqueUid();
+
       const newUser: User = {
         id: supabaseUser.id,
+        uid: uid,
         email: supabaseUser.email,
         name: data.name,
         semester: data.semester,

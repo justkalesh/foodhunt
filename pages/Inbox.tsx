@@ -75,6 +75,9 @@ const Inbox: React.FC = () => {
     const [mentionCursorPos, setMentionCursorPos] = useState<number | null>(null);
     const [showScrollBottom, setShowScrollBottom] = useState(false);
 
+    // Toast Notification
+    const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' | 'info' } | null>(null);
+
     // Refs
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -103,15 +106,18 @@ const Inbox: React.FC = () => {
         if (targetUserId) {
             const newConvId = [user.id, targetUserId].sort().join('_');
             setActiveChatId(newConvId);
-            if (targetUserName) {
-                setFetchedUsers(prev => ({
-                    ...prev,
-                    [targetUserId]: {
-                        name: targetUserName,
-                        email: targetUserEmail || ''
-                    }
-                }));
-            }
+
+            // Set fetched user info for display
+            const displayName = targetUserName || (targetUserId === 'foodhunt101lpu@gmail.com' ? 'Food-Hunt Team' : 'User');
+            const displayEmail = targetUserEmail || targetUserId;
+
+            setFetchedUsers(prev => ({
+                ...prev,
+                [targetUserId]: {
+                    name: displayName,
+                    email: displayEmail
+                }
+            }));
         }
     }, [user, navigate, location.search]);
 
@@ -261,7 +267,8 @@ const Inbox: React.FC = () => {
             // but Realtime subscription should handle it quickly.
             fetchInbox(); // Update timestamp in sidebar
         } else {
-            alert('Failed to send message');
+            setToast({ message: 'Failed to send message. Please try again.', type: 'error' });
+            setTimeout(() => setToast(null), 3000);
             setInputText(textToSend); // Restore if failed
         }
     };
@@ -281,7 +288,8 @@ const Inbox: React.FC = () => {
                     [targetUser.id]: { name: targetUser.name, email: targetUser.email }
                 }));
             } else {
-                alert('User not found');
+                setToast({ message: 'User not found. Please check the email or ID.', type: 'error' });
+                setTimeout(() => setToast(null), 3000);
             }
         }
     };
@@ -658,6 +666,19 @@ const Inbox: React.FC = () => {
                     message={confirmModal.message}
                     isDestructive={confirmModal.isDestructive}
                 />
+
+                {/* Toast Notification */}
+                {toast && (
+                    <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-fade-in-down ${toast.type === 'error' ? 'bg-red-500 text-white' :
+                        toast.type === 'success' ? 'bg-green-500 text-white' :
+                            'bg-slate-800 text-white'
+                        }`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
+                        <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70">
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

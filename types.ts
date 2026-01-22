@@ -7,6 +7,7 @@ export enum UserRole {
 
 export interface User {
   id: string;
+  uid?: string; // Unique 6-digit identifier for easy sharing/searching
   email: string; // Unique, Email address
   name: string;
   semester: string;

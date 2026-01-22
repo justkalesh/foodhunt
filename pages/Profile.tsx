@@ -181,6 +181,12 @@ const Profile: React.FC = () => {
                            {(isOwnProfile || user?.role === UserRole.ADMIN) && (
                               <div className="text-gray-500 dark:text-gray-400 font-mono text-sm mt-1">{displayUser.email}</div>
                            )}
+                           {displayUser.uid && (
+                              <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-mono">
+                                 <span className="text-xs text-gray-500 dark:text-gray-400">UID:</span>
+                                 <span className="font-bold">{displayUser.uid}</span>
+                              </div>
+                           )}
                         </div>
 
                         {/* Badge */}

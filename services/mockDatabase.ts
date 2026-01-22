@@ -289,16 +289,51 @@ export const api = {
     },
     search: async (queryText: string): Promise<GenericResponse<User>> => {
       try {
-        // Search by ID or Email
-        // Try ID first if it looks like a uuid (skip for now, just text search)
-        const { data, error } = await supabase
+        // Search by UID, Email, or ID - use exact match first, then fallback to partial
+        const trimmedQuery = queryText.trim().toLowerCase();
+
+        // Try UID match first (fastest for 6-digit IDs)
+        if (/^\d{6}$/.test(trimmedQuery)) {
+          const { data: uidMatch, error: uidError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('uid', trimmedQuery)
+            .maybeSingle();
+
+          if (uidError && !uidError.message.includes('multiple')) throw uidError;
+          if (uidMatch) return { success: true, message: 'User found.', data: uidMatch as User };
+        }
+
+        // Try exact email match
+        const { data: exactMatch, error: exactError } = await supabase
           .from('users')
           .select('*')
-          .or(`id.eq.${queryText},email.eq.${queryText}`)
+          .ilike('email', trimmedQuery)
           .maybeSingle();
 
-        if (error) throw error;
-        if (data) return { success: true, message: 'User found.', data: data as User };
+        if (exactError && !exactError.message.includes('multiple')) throw exactError;
+        if (exactMatch) return { success: true, message: 'User found.', data: exactMatch as User };
+
+        // Try exact ID match
+        const { data: idMatch, error: idError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', trimmedQuery)
+          .maybeSingle();
+
+        if (idError) throw idError;
+        if (idMatch) return { success: true, message: 'User found.', data: idMatch as User };
+
+        // Try partial email match with wildcard
+        const { data: partialMatch, error: partialError } = await supabase
+          .from('users')
+          .select('*')
+          .ilike('email', `%${trimmedQuery}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (partialError && !partialError.message.includes('multiple')) throw partialError;
+        if (partialMatch) return { success: true, message: 'User found.', data: partialMatch as User };
 
         return { success: false, message: 'User not found.' };
       } catch (error: any) {
@@ -1133,7 +1168,7 @@ export const api = {
     },
 
     // Simplified send that creates/gets conversation automatically (used by AuthContext, Inbox)
-    send: async (receiverId: string, senderId: string, content: string): Promise<GenericResponse<Message>> => {
+    send: async (senderId: string, receiverId: string, content: string): Promise<GenericResponse<Message>> => {
       try {
         // Get or create conversation
         const convRes = await api.messages.getOrCreateConversation(senderId, receiverId);
